@@ -19,9 +19,33 @@ body,
   padding: 0;
   width: 100%;
   min-height: 100vh;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+html {
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+}
+
+body {
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
 }
 
 #root {
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Larger touch targets on mobile */
+@media (max-width: 768px) {
+  button, [role="button"], label {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
