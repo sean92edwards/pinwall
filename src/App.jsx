@@ -66,7 +66,7 @@ function hdl(pos){const b={position:"absolute",zIndex:10,background:"#4a90e2",cu
 const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
 
 function HorizontalWall({session}){
-  const [items,setItems]=useState(INITIAL_ITEMS);
+  const [items,setItems]=useState([]);
   const [editing,setEditing]=useState(false);
   const [selected,setSelected]=useState(null);
   const [editingText,setEditingText]=useState(null);
@@ -96,7 +96,7 @@ function HorizontalWall({session}){
   useEffect(()=>{
     const loadWall=async()=>{
       if(!session?.user)return;
-      const{data,error}=await supabase.from('walls').select('items').eq('user_id',session.user.id).single();
+      const{data,error}=await supabase.from('walls').select('items').eq('user_id',session.user.id).maybeSingle();
       if(error)console.error('[Wall load] error:',error);
       console.log('[Wall load] data:',data);
       if(data?.items?.length)setItems(data.items);
@@ -296,10 +296,26 @@ function HorizontalWall({session}){
   );
 }
 
-function Bookshelf({onOpenAlbum,shelves,onAddAlbum,onDeleteAlbum,onRenameAlbum,onAddShelf}){
+function Bookshelf({onOpenAlbum,shelves,onAddAlbum,onDeleteAlbum,onRenameAlbum,onSetCover,onAddShelf}){
   const [hoveredId,setHoveredId]=useState(null);
   const [renamingId,setRenamingId]=useState(null);
+  const [uploadingCoverId,setUploadingCoverId]=useState(null);
   const newAlbum=()=>({id:Math.floor(Math.random()*2000000000),name:"New Album",emoji:"📷",height:190,photos:[],comments:[]});
+
+  const handleCoverUpload=async(albumId,file)=>{
+    if(!file)return;
+    const ALLOWED=['image/jpeg','image/png','image/webp','image/gif','image/avif'];
+    if(!ALLOWED.includes(file.type)){alert('Images only');return;}
+    if(file.size>10*1024*1024){alert('Max 10MB');return;}
+    setUploadingCoverId(albumId);
+    const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+    const path=`covers/${albumId}.${ext}`;
+    const{error}=await supabase.storage.from('photos').upload(path,file,{upsert:true});
+    if(error){console.error('Cover upload error:',error);setUploadingCoverId(null);return;}
+    const{data:{publicUrl}}=supabase.storage.from('photos').getPublicUrl(path);
+    onSetCover(albumId,publicUrl);
+    setUploadingCoverId(null);
+  };
   return(
     <div style={{position:"relative",overflow:"hidden",minHeight:"calc(100vh - 58px)",padding:"40px 40px 70px",background:"#efe5d4",backgroundImage:"radial-gradient(ellipse 90% 60% at 50% -10%,rgba(255,250,238,0.7) 0%,transparent 60%),radial-gradient(ellipse at 50% 120%,rgba(120,90,50,0.10) 0%,transparent 55%)"}}>
       <div style={{position:"absolute",right:26,bottom:70,fontSize:60,pointerEvents:"none",opacity:0.85,filter:"drop-shadow(0 8px 10px rgba(0,0,0,0.12))"}}>🪴</div>
@@ -319,14 +335,29 @@ function Bookshelf({onOpenAlbum,shelves,onAddAlbum,onDeleteAlbum,onRenameAlbum,o
               const cover=album.photos&&album.photos[0];
               return(
                 <div key={album.id} style={{position:"relative"}} onMouseEnter={()=>setHoveredId(album.id)} onMouseLeave={()=>setHoveredId(null)}>
-                  {hoveredId===album.id&&<><div onClick={e=>{e.stopPropagation();setRenamingId(album.id);}} style={{position:"absolute",top:-9,left:-9,width:20,height:20,borderRadius:"50%",background:"#4a90e2",color:"white",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10,boxShadow:"0 2px 6px rgba(0,0,0,0.35)"}}>✏</div><div onClick={e=>{e.stopPropagation();onDeleteAlbum(album.id);}} style={{position:"absolute",top:-9,right:-9,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10,boxShadow:"0 2px 6px rgba(0,0,0,0.35)"}}>✕</div></>}
-                  {renamingId===album.id&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:"calc(100% + 8px)",left:"50%",transform:"translateX(-50%)",background:"#2c2620",borderRadius:8,padding:"6px 10px",zIndex:20,boxShadow:"0 4px 16px rgba(0,0,0,0.5)",whiteSpace:"nowrap"}}><input autoFocus defaultValue={album.name} onBlur={e=>{onRenameAlbum(album.id,e.target.value||album.name);setRenamingId(null);}} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();if(e.key==='Escape')setRenamingId(null);}} style={{background:"transparent",border:"none",borderBottom:"1px solid #c8a96e",outline:"none",color:"white",fontFamily:"'Caveat',cursive",fontSize:16,width:140,display:"block"}}/></div>}
+                  {/* Hover controls */}
+                  {hoveredId===album.id&&!renamingId&&<div style={{position:"absolute",top:-32,left:"50%",transform:"translateX(-50%)",display:"flex",gap:4,zIndex:20,whiteSpace:"nowrap"}} onClick={e=>e.stopPropagation()}>
+                    <button onClick={e=>{e.stopPropagation();setRenamingId(album.id);}} style={{background:"#4a90e2",color:"white",border:"none",borderRadius:12,padding:"3px 9px",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>✏ Rename</button>
+                    <label style={{background:"#2a9d8f",color:"white",border:"none",borderRadius:12,padding:"3px 9px",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:uploadingCoverId===album.id?"default":"pointer",opacity:uploadingCoverId===album.id?0.6:1}}>
+                      {uploadingCoverId===album.id?"⏳":"🖼 Cover"}
+                      <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>handleCoverUpload(album.id,e.target.files[0])} disabled={uploadingCoverId===album.id}/>
+                    </label>
+                    <button onClick={e=>{e.stopPropagation();onDeleteAlbum(album.id);}} style={{background:"#e63946",color:"white",border:"none",borderRadius:12,padding:"3px 9px",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>✕</button>
+                  </div>}
+                  {/* Inline rename input */}
+                  {renamingId===album.id&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:-40,left:"50%",transform:"translateX(-50%)",background:"#2c2620",borderRadius:8,padding:"6px 10px",zIndex:20,boxShadow:"0 4px 16px rgba(0,0,0,0.5)",whiteSpace:"nowrap",display:"flex",gap:6,alignItems:"center"}}>
+                    <input autoFocus defaultValue={album.name} onBlur={e=>{onRenameAlbum(album.id,e.target.value||album.name);setRenamingId(null);}} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();if(e.key==='Escape')setRenamingId(null);}} style={{background:"transparent",border:"none",borderBottom:"1px solid #c8a96e",outline:"none",color:"white",fontFamily:"'Caveat',cursive",fontSize:16,width:140,display:"block"}}/>
+                    <span onClick={()=>setRenamingId(null)} style={{color:"#888",cursor:"pointer",fontSize:12}}>✕</span>
+                  </div>}
                   <div onClick={()=>onOpenAlbum(album)} style={{width:128,height:172,borderRadius:"6px 9px 9px 6px",cursor:"pointer",position:"relative",overflow:"hidden",background:`linear-gradient(150deg,${theme.bg} 0%,${theme.spine} 118%)`,boxShadow:"0 14px 26px rgba(60,40,15,0.32)",transform:`rotate(${tilt}deg)`,transformOrigin:"bottom center",transition:"transform 0.22s,box-shadow 0.22s",userSelect:"none",borderLeft:`5px solid ${theme.spine}`}}
                     onMouseEnter={e=>{e.currentTarget.style.transform=`rotate(${tilt}deg) translateY(-12px)`;e.currentTarget.style.boxShadow="0 24px 40px rgba(60,40,15,0.40)";}}
                     onMouseLeave={e=>{e.currentTarget.style.transform=`rotate(${tilt}deg)`;e.currentTarget.style.boxShadow="0 14px 26px rgba(60,40,15,0.32)";}}>
                     <div style={{position:"absolute",top:8,right:8,fontSize:18,filter:"drop-shadow(0 2px 3px rgba(0,0,0,0.3))",zIndex:3}}>{album.emoji}</div>
-                    <div style={{position:"absolute",top:16,left:"50%",transform:"translateX(-50%) rotate(-3deg)",background:"#fff",padding:"5px 5px 15px",boxShadow:"0 4px 10px rgba(0,0,0,0.25)",width:84}}>
-                      <div style={{height:60,background:cover?cover.color:"#f0e6d2",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30}}>{cover?cover.emoji:album.emoji}</div>
+                    <div style={{position:"absolute",top:16,left:"50%",transform:"translateX(-50%) rotate(-3deg)",background:"#fff",padding:"5px 5px 15px",boxShadow:"0 4px 10px rgba(0,0,0,0.25)",width:84,overflow:"hidden"}}>
+                      {album.coverUrl
+                        ?<img src={album.coverUrl} style={{width:"100%",height:60,objectFit:"cover",display:"block"}} alt="cover"/>
+                        :<div style={{height:60,background:cover?cover.color:"#f0e6d2",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30}}>{cover?cover.emoji:album.emoji}</div>
+                      }
                     </div>
                     <div style={{position:"absolute",bottom:11,left:6,right:6,fontFamily:"'Caveat',cursive",fontSize:15,fontWeight:700,color:theme.text,textAlign:"center",lineHeight:1.05,maxHeight:36,overflow:"hidden"}}>{album.name}</div>
                   </div>
@@ -597,9 +628,9 @@ function SharedWallView({items:initialItems,label}){
     <div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'Georgia',serif"}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}`}</style>
       <div style={{background:"#ffffff",borderBottom:"1px solid #e8e2d8",padding:"0 24px",display:"flex",alignItems:"center",justifyContent:"space-between",height:58,flexShrink:0,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:34,height:34,background:"linear-gradient(150deg,#e85d5d,#c0392b)",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,transform:"rotate(-5deg)",boxShadow:"0 3px 8px rgba(180,40,30,0.35)"}}>📌</div>
-          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:800,fontSize:24,letterSpacing:"-0.01em",color:"#2a2118"}}>Pinwall</span>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:26,lineHeight:1}}>📌</span>
+          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:26,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
         </div>
         <div style={{fontFamily:"'Lato',sans-serif",fontSize:13,color:"#888",display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontSize:16}}>👀</span> You're viewing <strong style={{color:"#2a2118"}}>{label}</strong> — read only
@@ -661,7 +692,7 @@ export default function Pinwall(){
   const [view,setView]=useState("wall");
   const [openAlbum,setOpenAlbum]=useState(null);
   const [session,setSession]=useState(null);
-  const [shelves,setShelves]=useState(INITIAL_SHELVES);
+  const [shelves,setShelves]=useState([{id:1,albums:[]}])
   const [shareToken,setShareToken]=useState(null);
   const [shareCopied,setShareCopied]=useState(false);
   const [sharedView,setSharedView]=useState(null); // {ownerId, label} when viewing someone else's wall
@@ -738,9 +769,9 @@ export default function Pinwall(){
     <div style={{fontFamily:"'Georgia',serif",background:"#1a1a1a",minHeight:"100vh"}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}`}</style>
       <div style={{background:"#ffffff",borderBottom:"1px solid #e8e2d8",padding:"0 24px",display:"flex",alignItems:"center",justifyContent:"space-between",height:58,position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:34,height:34,background:"linear-gradient(150deg,#e85d5d,#c0392b)",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,transform:"rotate(-5deg)",boxShadow:"0 3px 8px rgba(180,40,30,0.35)"}}>📌</div>
-          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:800,fontSize:24,letterSpacing:"-0.01em",color:"#2a2118"}}>Pinwall</span>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:26,lineHeight:1}}>📌</span>
+          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:26,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
           {[["wall","📌 My Wall"],["shelf","📚 Library"]].map(([v,label])=>(
@@ -753,10 +784,10 @@ export default function Pinwall(){
           </button>
           <button onClick={()=>supabase.auth.signOut()} style={{background:"none",border:"1px solid #ddd",borderRadius:20,padding:"5px 14px",fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer",color:"#888"}}>Sign out</button>
           <div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Lato',sans-serif",fontWeight:700,fontSize:14,boxShadow:"0 2px 6px rgba(180,40,30,0.3)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
-        </div>
+        </div>  
       </div>
       {view==="wall"&&<HorizontalWall session={session}/>}
-      {view==="shelf"&&<Bookshelf onOpenAlbum={setOpenAlbum} shelves={shelves} onAddAlbum={(shelfId,album)=>setShelves(prev=>prev.map(s=>s.id===shelfId?{...s,albums:[...s.albums,album]}:s))} onDeleteAlbum={id=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.filter(a=>a.id!==id)})));if(openAlbum?.id===id)setOpenAlbum(null);}} onRenameAlbum={(id,name)=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,name}:a)})));if(openAlbum?.id===id)setOpenAlbum(prev=>({...prev,name}));}} onAddShelf={()=>setShelves(prev=>[...prev,{id:Math.floor(Math.random()*2000000000),albums:[]}])}/>}
+      {view==="shelf"&&<Bookshelf onOpenAlbum={setOpenAlbum} shelves={shelves} onAddAlbum={(shelfId,album)=>setShelves(prev=>prev.map(s=>s.id===shelfId?{...s,albums:[...s.albums,album]}:s))} onDeleteAlbum={id=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.filter(a=>a.id!==id)})));if(openAlbum?.id===id)setOpenAlbum(null);}} onRenameAlbum={(id,name)=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,name}:a)})));if(openAlbum?.id===id)setOpenAlbum(prev=>({...prev,name}));}} onSetCover={(id,url)=>setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,coverUrl:url}:a)})))} onAddShelf={()=>setShelves(prev=>[...prev,{id:Math.floor(Math.random()*2000000000),albums:[]}])}/>}
       {openAlbum&&<PhotoBook album={openAlbum} onClose={()=>setOpenAlbum(null)} session={session}/>}
     </div>
   );
