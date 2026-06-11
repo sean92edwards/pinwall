@@ -388,7 +388,7 @@ function Bookshelf({onOpenAlbum,shelves,onAddAlbum,onDeleteAlbum,onRenameAlbum,o
     setUploadingCoverId(null);
   };
   return(
-    <div style={{position:"relative",overflow:"hidden",minHeight:"calc(100vh - 58px)",padding:"40px 40px 70px",background:"#efe5d4",backgroundImage:"radial-gradient(ellipse 90% 60% at 50% -10%,rgba(255,250,238,0.7) 0%,transparent 60%),radial-gradient(ellipse at 50% 120%,rgba(120,90,50,0.10) 0%,transparent 55%)"}}>
+    <div style={{position:"relative",overflow:"auto",minHeight:"calc(100dvh - 58px)",padding:"40px 40px 70px",background:"#efe5d4",backgroundImage:"radial-gradient(ellipse 90% 60% at 50% -10%,rgba(255,250,238,0.7) 0%,transparent 60%),radial-gradient(ellipse at 50% 120%,rgba(120,90,50,0.10) 0%,transparent 55%)"}}>
       <div style={{position:"absolute",right:26,bottom:70,fontSize:60,pointerEvents:"none",opacity:0.85,filter:"drop-shadow(0 8px 10px rgba(0,0,0,0.12))"}}>🪴</div>
       <div style={{position:"absolute",right:120,top:74,fontSize:20,transform:"rotate(12deg)",pointerEvents:"none",opacity:0.55}}>✨</div>
       <div style={{position:"absolute",left:"42%",top:26,fontSize:16,transform:"rotate(-10deg)",pointerEvents:"none",opacity:0.45}}>💛</div>
