@@ -161,12 +161,34 @@ function HorizontalWall({session}){
       setView(v=>{const factor=Math.exp(-e.deltaY*0.0015);const nz=Math.min(3,Math.max(0.05,v.zoom*factor));const wx=(sx-v.x)/v.zoom,wy=(sy-v.y)/v.zoom;return{zoom:nz,x:sx-wx*nz,y:sy-wy*nz};});
     }
   };
+  const lastTouchDist=useRef(null);
+  const onTouchMoveWall=e=>{
+    e.preventDefault();
+    if(e.touches.length===1&&panStart.current){
+      const t=e.touches[0];
+      didDrag.current=true;
+      const p=panStart.current;
+      setView(v=>({...v,x:p.vx+(t.clientX-p.mx),y:p.vy+(t.clientY-p.my)}));
+    } else if(e.touches.length===2&&lastTouchDist.current){
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      const dist=Math.hypot(dx,dy);
+      const factor=dist/lastTouchDist.current;
+      const midX=(e.touches[0].clientX+e.touches[1].clientX)/2;
+      const midY=(e.touches[0].clientY+e.touches[1].clientY)/2;
+      const r=rectOf();
+      const sx=midX-(r?.left||0),sy=midY-(r?.top||0);
+      setView(v=>{const nz=Math.min(3,Math.max(0.05,v.zoom*factor));const wx=(sx-v.x)/v.zoom,wy=(sy-v.y)/v.zoom;return{zoom:nz,x:sx-wx*nz,y:sy-wy*nz};});
+      lastTouchDist.current=dist;
+    }
+  };
   const zoomBy=mult=>{setView(v=>{const nz=Math.min(3,Math.max(0.05,v.zoom*mult));const cx=vp.w/2,cy=vp.h/2;const wx=(cx-v.x)/v.zoom,wy=(cy-v.y)/v.zoom;return{zoom:nz,x:cx-wx*nz,y:cy-wy*nz};});};
   const resetView=()=>setView({x:80,y:80,zoom:1});
   useEffect(()=>{
     const el=viewportRef.current;if(!el)return;
     el.addEventListener('wheel',onWheel,{passive:false});
-    return()=>el.removeEventListener('wheel',onWheel);
+    el.addEventListener('touchmove',onTouchMoveWall,{passive:false});
+    return()=>{el.removeEventListener('wheel',onWheel);el.removeEventListener('touchmove',onTouchMoveWall);};
   },[]);
 
   const addSticker=emoji=>{const c=centerWorld();setItems(p=>[{id:Date.now(),type:'sticker',emoji,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*30,size:50,zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setShowStickers(false);};
@@ -209,6 +231,26 @@ function HorizontalWall({session}){
     panStart.current={mx:e.clientX,my:e.clientY,vx:v.x,vy:v.y};
     didDrag.current=false;
   };
+
+  const onTouchStartWall=e=>{
+    if(e.touches.length===1){
+      const t=e.touches[0];
+      mousedownOnItem.current=false;
+      const v=viewRef.current;
+      panStart.current={mx:t.clientX,my:t.clientY,vx:v.x,vy:v.y};
+      didDrag.current=false;
+      lastTouchDist.current=null;
+    } else if(e.touches.length===2){
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      lastTouchDist.current=Math.hypot(dx,dy);
+      panStart.current=null;
+    }
+  };
+  const onTouchEndWall=()=>{
+    panStart.current=null;
+    lastTouchDist.current=null;
+  };
   const onViewportClick=()=>{
     if(didDrag.current){didDrag.current=false;return;}
     if(mousedownOnItem.current){mousedownOnItem.current=false;return;}
@@ -250,7 +292,7 @@ function HorizontalWall({session}){
           <button onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,background:editing?"#2a9d8f":"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
         </div>
       </div>
-      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:editing?"default":"grab",background:"#d4956a",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75 0.35' numOctaves='5' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.4'/%3E%3C/filter%3E%3Crect width='400' height='400' fill='%23e0a878' opacity='1'/%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.28' style='mix-blend-mode:multiply'/%3E%3C/svg%3E"),repeating-linear-gradient(92deg,rgba(220,170,100,0.07) 0px,rgba(220,170,100,0.07) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(2deg,rgba(140,80,30,0.05) 0px,rgba(140,80,30,0.05) 1px,transparent 1px,transparent 22px)`,backgroundSize:"400px 400px,400px 400px,400px 400px",userSelect:"none"}}>
+      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onTouchStart={onTouchStartWall} onTouchEnd={onTouchEndWall} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:editing?"default":"grab",touchAction:"none",background:"#d4956a",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75 0.35' numOctaves='5' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.4'/%3E%3C/filter%3E%3Crect width='400' height='400' fill='%23e0a878' opacity='1'/%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.28' style='mix-blend-mode:multiply'/%3E%3C/svg%3E"),repeating-linear-gradient(92deg,rgba(220,170,100,0.07) 0px,rgba(220,170,100,0.07) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(2deg,rgba(140,80,30,0.05) 0px,rgba(140,80,30,0.05) 1px,transparent 1px,transparent 22px)`,backgroundSize:"400px 400px,400px 400px,400px 400px",userSelect:"none"}}>
         <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 80px rgba(60,30,5,0.20)",background:"radial-gradient(ellipse at 50% 0%,rgba(255,220,160,0.15) 0%,transparent 55%)",pointerEvents:"none",zIndex:5}}/>
         <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`}}>
           {sorted.map(item=>{
