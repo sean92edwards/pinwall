@@ -183,7 +183,6 @@ function HorizontalWall({session}){
     }
   };
   const onTouchStartWall=e=>{
-    e.preventDefault();
     if(e.touches.length===1){
       const t=e.touches[0];
       mousedownOnItem.current=false;
@@ -192,6 +191,7 @@ function HorizontalWall({session}){
       didDrag.current=false;
       lastTouchDist.current=null;
     } else if(e.touches.length===2){
+      e.preventDefault();
       const dx=e.touches[0].clientX-e.touches[1].clientX;
       const dy=e.touches[0].clientY-e.touches[1].clientY;
       lastTouchDist.current=Math.hypot(dx,dy);
