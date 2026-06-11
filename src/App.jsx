@@ -135,9 +135,9 @@ function HorizontalWall({session}){
 
   const bringToFront=id=>{const z=maxZ+1;setMaxZ(z);setItems(p=>p.map(i=>i.id===id?{...i,zIndex:z}:i));return z;};
 
-  const startDrag=(e,id)=>{const cx=e.clientX||e.touches?.[0]?.clientX;const cy=e.clientY||e.touches?.[0]?.clientY;e.stopPropagation();if(!editing)return;if(editingText===id)return;mousedownOnItem.current=true;bringToFront(id);setSelected(id);const item=items.find(i=>i.id===id);const v=viewRef.current;dragStart.current={mode:'move',id,mouseX:cx,mouseY:cy,cx:item.cx,cy:item.cy,zoom:v.zoom};};
-  const startRotate=(e,id)=>{const cx=e.clientX||e.touches?.[0]?.clientX;const cy=e.clientY||e.touches?.[0]?.clientY;e.preventDefault();e.stopPropagation();mousedownOnItem.current=true;const item=items.find(i=>i.id===id);const r=rectOf();const v=viewRef.current;const cxS=item.cx*v.zoom+v.x+(r?.left||0),cyS=item.cy*v.zoom+v.y+(r?.top||0);const startAngle=Math.atan2(cy-cyS,cx-cxS)*(180/Math.PI);dragStart.current={mode:'rotate',id,startAngle,startRot:item.rot||0,cxS,cyS};};
-  const startResize=(e,id)=>{const cx=e.clientX||e.touches?.[0]?.clientX;const cy=e.clientY||e.touches?.[0]?.clientY;e.preventDefault();e.stopPropagation();mousedownOnItem.current=true;const item=items.find(i=>i.id===id);const rotRad=(item.rot||0)*Math.PI/180;const v=viewRef.current;dragStart.current={mode:'resize',id,mouseX:cx,mouseY:cy,startW:item.w||item.size||60,startH:item.h||item.size||60,rotRad,zoom:v.zoom};};
+  const startDrag=(e,id)=>{const cx=e.clientX||e.touches?.[0]?.clientX;const cy=e.clientY||e.touches?.[0]?.clientY;e.stopPropagation();if(!editing)return;if(editingText===id)return;mousedownOnItem.current=true;bringToFront(id);setSelected(id);const item=items.find(i=>i.id===id);const v=viewRef.current;dragStart.current={mode:'move',id,mouseX:cx,mouseY:cy,cx:item.cx,cy:item.cy,zoom:v.zoom};panStart.current=null;};
+  const startRotate=(e,id)=>{const cx=e.clientX||e.touches?.[0]?.clientX;const cy=e.clientY||e.touches?.[0]?.clientY;e.preventDefault();e.stopPropagation();mousedownOnItem.current=true;const item=items.find(i=>i.id===id);const r=rectOf();const v=viewRef.current;const cxS=item.cx*v.zoom+v.x+(r?.left||0),cyS=item.cy*v.zoom+v.y+(r?.top||0);const startAngle=Math.atan2(cy-cyS,cx-cxS)*(180/Math.PI);dragStart.current={mode:'rotate',id,startAngle,startRot:item.rot||0,cxS,cyS};panStart.current=null;};
+  const startResize=(e,id)=>{const cx=e.clientX||e.touches?.[0]?.clientX;const cy=e.clientY||e.touches?.[0]?.clientY;e.preventDefault();e.stopPropagation();mousedownOnItem.current=true;const item=items.find(i=>i.id===id);const rotRad=(item.rot||0)*Math.PI/180;const v=viewRef.current;dragStart.current={mode:'resize',id,mouseX:cx,mouseY:cy,startW:item.w||item.size||60,startH:item.h||item.size||60,rotRad,zoom:v.zoom};panStart.current=null;};
 
   useEffect(()=>{
     const onMove=e=>{
@@ -177,6 +177,7 @@ function HorizontalWall({session}){
   };
   const lastTouchDist=useRef(null);
   const onTouchMoveWall=e=>{
+    if(dragStart.current)return; // Item handler owns the touch
     if(!panStart.current&&!lastTouchDist.current)return;
     e.preventDefault();
     if(e.touches.length===1&&panStart.current){
@@ -201,6 +202,8 @@ function HorizontalWall({session}){
     // Don't start panning if tapping a button or interactive control
     const tag=e.target.tagName;
     if(tag==='BUTTON'||tag==='INPUT'||tag==='TEXTAREA'||tag==='LABEL'||tag==='A'||e.target.closest('button,input,textarea,label,a,[data-control]'))return;
+    // If an item handler already claimed this touch (rotate/resize/drag), skip
+    if(dragStart.current)return;
     if(e.touches.length===1){
       const t=e.touches[0];
       mousedownOnItem.current=false;
