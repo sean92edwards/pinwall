@@ -163,6 +163,7 @@ function HorizontalWall({session}){
   };
   const lastTouchDist=useRef(null);
   const onTouchMoveWall=e=>{
+    if(!panStart.current&&!lastTouchDist.current)return;
     e.preventDefault();
     if(e.touches.length===1&&panStart.current){
       const t=e.touches[0];
@@ -183,6 +184,9 @@ function HorizontalWall({session}){
     }
   };
   const onTouchStartWall=e=>{
+    // Don't start panning if tapping a button or interactive control
+    const tag=e.target.tagName;
+    if(tag==='BUTTON'||tag==='INPUT'||tag==='TEXTAREA'||tag==='LABEL'||tag==='A'||e.target.closest('button,input,textarea,label,a,[data-control]'))return;
     if(e.touches.length===1){
       const t=e.touches[0];
       mousedownOnItem.current=false;
