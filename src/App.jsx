@@ -477,7 +477,7 @@ function PhotoBook({album,onClose,session}){
   },-1);
   const pagesFromPhotos=Math.ceil(album.photos.length/4);
   const pagesFromStickers=maxStickerPage+1;
-  const contentPages=Math.max(1,pagesFromPhotos,pagesFromStickers);
+  const contentPages=Math.max(1,pagesFromPhotos,pagesFromStickers)+1; // +1 always leaves a blank page to add to
   const totalPages=contentPages+1; // +1 for guest book
 
   const hasLoaded=useRef(false);
