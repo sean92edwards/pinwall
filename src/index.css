@@ -20,26 +20,23 @@ body,
   width: 100%;
   min-height: 100vh;
   overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
 }
 
 html {
   overflow: hidden;
-  position: fixed;
-  inset: 0;
+  height: 100%;
 }
 
 body {
-  overflow: hidden;
-  position: fixed;
-  inset: 0;
+  overflow: auto;
+  height: 100%;
 }
 
 #root {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Larger touch targets on mobile */
