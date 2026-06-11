@@ -447,14 +447,13 @@ function Bookshelf({onOpenAlbum,shelves,onAddAlbum,onDeleteAlbum,onRenameAlbum,o
 }
 
 function PhotoBook({album,onClose,session}){
-  const totalPages=Math.max(2,Math.ceil(album.photos.length/4)+1);
+  const [stickersByPage,setStickersByPage]=useState({});
   const [page,setPage]=useState(0);
   const [pendingPage,setPendingPage]=useState(1);
   const [flipping,setFlipping]=useState(false);
   const [flipDir,setFlipDir]=useState("forward");
   const [positions,setPositions]=useState(()=>initBookPositions(album.photos));
   const [maxZ,setMaxZ]=useState(album.photos.length+1);
-  const [stickersByPage,setStickersByPage]=useState({});
   const [selectedId,setSelectedId]=useState(null);
   const [selectedType,setSelectedType]=useState(null);
   const [filmLifted,setFilmLifted]=useState(false);
@@ -470,6 +469,17 @@ function PhotoBook({album,onClose,session}){
   const touchStartX=useRef(null);
   const pageStateRef=useRef(page);
   useEffect(()=>{pageStateRef.current=page;},[page]);
+
+  // Pages grow dynamically as photos are added
+  const maxStickerPage=Object.keys(stickersByPage).reduce((max,k)=>{
+    const items=stickersByPage[k];
+    return items&&items.length>0?Math.max(max,Number(k)):max;
+  },-1);
+  const pagesFromPhotos=Math.ceil(album.photos.length/4);
+  const pagesFromStickers=maxStickerPage+1;
+  const contentPages=Math.max(1,pagesFromPhotos,pagesFromStickers);
+  const totalPages=contentPages+1; // +1 for guest book
+
   const hasLoaded=useRef(false);
   useEffect(()=>{
     if(!session?.user)return;
