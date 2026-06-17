@@ -447,24 +447,25 @@ function HorizontalWall({session}){
   );
 }
 
-function Bookshelf({onOpenAlbum,shelves,onAddAlbum,onDeleteAlbum,onRenameAlbum,onSetCover,onAddShelf}){
+function Bookshelf({onOpenAlbum,shelves,onAddAlbum,onDeleteAlbum,onRenameAlbum,onSetCover,onAddShelf,session}){
   const [hoveredId,setHoveredId]=useState(null);
   const [renamingId,setRenamingId]=useState(null);
   const [uploadingCoverId,setUploadingCoverId]=useState(null);
   const newAlbum=()=>({id:Math.floor(Math.random()*2000000000),name:"New Album",emoji:"📷",height:190,photos:[],comments:[]});
 
   const handleCoverUpload=async(albumId,file)=>{
-    if(!file)return;
+    if(!file||!session?.user)return;
     const ALLOWED=['image/jpeg','image/png','image/webp','image/gif','image/avif'];
     if(!ALLOWED.includes(file.type)){alert('Images only');return;}
     if(file.size>10*1024*1024){alert('Max 10MB');return;}
     setUploadingCoverId(albumId);
     const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
-    const path=`covers/${albumId}.${ext}`;
-    const{error}=await supabase.storage.from('photos').upload(path,file,{upsert:true});
+    const path=`${session.user.id}/covers/${albumId}_${Date.now()}.${ext}`;
+    const{error}=await supabase.storage.from('photos').upload(path,file);
     if(error){console.error('Cover upload error:',error);setUploadingCoverId(null);return;}
     const{data:{publicUrl}}=supabase.storage.from('photos').getPublicUrl(path);
     onSetCover(albumId,publicUrl);
+    console.log('[Cover] set cover for album',albumId,'url:',publicUrl);
     setUploadingCoverId(null);
   };
   return(
@@ -856,7 +857,9 @@ export default function Pinwall(){
   const [shelves,setShelves]=useState([{id:1,albums:[]}])
   const [shareToken,setShareToken]=useState(null);
   const [shareCopied,setShareCopied]=useState(false);
-  const [sharedView,setSharedView]=useState(null); // {ownerId, label} when viewing someone else's wall
+  const [sharedView,setSharedView]=useState(null);
+  const [friends,setFriends]=useState([]);
+  const [viewingFriend,setViewingFriend]=useState(null);
   const shelfLoaded=useRef(false);
   const shelfSaveTimeout=useRef(null);
 
@@ -865,7 +868,6 @@ export default function Pinwall(){
     const params=new URLSearchParams(window.location.search);
     const token=params.get('share');
     if(!token)return;
-    // Use the SECURITY DEFINER function — bypasses RLS safely
     supabase.rpc('get_shared_wall',{token_id:token}).then(({data,error})=>{
       if(error||!data){console.error('Invalid share token',error);return;}
       setSharedView({ownerId:data.owner_id,label:data.label||'Pinwall',items:data.items,token});
@@ -883,9 +885,12 @@ export default function Pinwall(){
     // Load or create share token for this user
     supabase.from('share_tokens').select('id').eq('owner_id',session.user.id).maybeSingle().then(async({data})=>{
       if(data?.id){setShareToken(data.id);return;}
-      // Create one
       const{data:created}=await supabase.from('share_tokens').insert({owner_id:session.user.id,label:'My Pinwall'}).select('id').single();
       if(created?.id)setShareToken(created.id);
+    });
+    // Load friends
+    supabase.from('friends').select('id,friend_token,nickname,added_at').eq('user_id',session.user.id).then(({data})=>{
+      if(data)setFriends(data);
     });
   },[session]);
 
@@ -911,6 +916,24 @@ export default function Pinwall(){
     return()=>clearTimeout(shelfSaveTimeout.current);
   },[shelves,session]);
 
+  const addFriend=async(token,nickname)=>{
+    if(!session?.user||!token)return;
+    const{data,error}=await supabase.from('friends').insert({user_id:session.user.id,friend_token:token,nickname:nickname||'Friend'}).select().single();
+    if(error){if(error.code==='23505')alert('Already added!');else console.error(error);return;}
+    if(data)setFriends(prev=>[...prev,data]);
+  };
+
+  const viewFriendWall=async(friendToken,nickname)=>{
+    const{data,error}=await supabase.rpc('get_shared_wall',{token_id:friendToken});
+    if(error||!data){alert('Could not load wall');return;}
+    setViewingFriend({items:data.items||[],nickname});
+  };
+
+  const removeFriend=async(friendId)=>{
+    await supabase.from('friends').delete().eq('id',friendId);
+    setFriends(prev=>prev.filter(f=>f.id!==friendId));
+  };
+
   const copyShareLink=async()=>{
     if(!shareToken)return;
     const url=`${window.location.origin}${window.location.pathname}?share=${shareToken}`;
@@ -919,8 +942,29 @@ export default function Pinwall(){
     setTimeout(()=>setShareCopied(false),2500);
   };
 
-  // Shared wall view — no auth required
+  // Shared wall view
   if(sharedView){
+    // If logged in, show option to add as friend
+    if(session?.user&&sharedView.ownerId!==session.user.id){
+      return(
+        <div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'Nunito',sans-serif"}}>
+          <div style={{background:"#fff",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #e8e2d8",flexShrink:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:22}}>📌</span>
+              <span style={{fontWeight:900,fontSize:20,color:"#1a1a1a"}}>Pinwall</span>
+            </div>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#888"}}>
+              👀 Viewing {sharedView.label}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{addFriend(sharedView.token,sharedView.label);alert('Added as friend!');}} style={{background:"#2a9d8f",color:"#fff",border:"none",borderRadius:20,padding:"6px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>➕ Add as friend</button>
+              <button onClick={()=>{setSharedView(null);window.history.pushState({},'',window.location.pathname);}} style={{background:"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"6px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>Go to my wall</button>
+            </div>
+          </div>
+          <div style={{flex:1}}><SharedWallView items={sharedView.items||[]} label={sharedView.label}/></div>
+        </div>
+      );
+    }
     return <SharedWallView items={sharedView.items||[]} label={sharedView.label}/>;
   }
 
@@ -935,7 +979,7 @@ export default function Pinwall(){
           <span style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:26,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
-          {[["wall","📌 My Wall"],["shelf","📚 Library"]].map(([v,label])=>(
+          {[["wall","📌 My Wall"],["shelf","📚 Library"],["friends","👥 Friends"]].map(([v,label])=>(
             <button key={v} onClick={()=>{setView(v);if(v==='wall'&&openAlbum)setOpenAlbum(null);}} style={{background:"none",color:view===v?"#1a1a1a":"#888",border:"none",borderRadius:20,padding:"6px 18px",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",transition:"color 0.15s",borderBottom:view===v?"2px solid #1a1a1a":"2px solid transparent"}}>{label}</button>
           ))}
         </div>
@@ -948,7 +992,40 @@ export default function Pinwall(){
         </div>  
       </div>
       {view==="wall"&&<HorizontalWall session={session}/>}
-      {view==="shelf"&&<Bookshelf onOpenAlbum={setOpenAlbum} shelves={shelves} onAddAlbum={(shelfId,album)=>setShelves(prev=>prev.map(s=>s.id===shelfId?{...s,albums:[...s.albums,album]}:s))} onDeleteAlbum={id=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.filter(a=>a.id!==id)})));if(openAlbum?.id===id)setOpenAlbum(null);}} onRenameAlbum={(id,name)=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,name}:a)})));if(openAlbum?.id===id)setOpenAlbum(prev=>({...prev,name}));}} onSetCover={(id,url)=>setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,coverUrl:url}:a)})))} onAddShelf={()=>setShelves(prev=>[...prev,{id:Math.floor(Math.random()*2000000000),albums:[]}])}/>}
+      {view==="shelf"&&<Bookshelf onOpenAlbum={setOpenAlbum} shelves={shelves} onAddAlbum={(shelfId,album)=>setShelves(prev=>prev.map(s=>s.id===shelfId?{...s,albums:[...s.albums,album]}:s))} onDeleteAlbum={id=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.filter(a=>a.id!==id)})));if(openAlbum?.id===id)setOpenAlbum(null);}} onRenameAlbum={(id,name)=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,name}:a)})));if(openAlbum?.id===id)setOpenAlbum(prev=>({...prev,name}));}} onSetCover={(id,url)=>setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,coverUrl:url}:a)})))} onAddShelf={()=>setShelves(prev=>[...prev,{id:Math.floor(Math.random()*2000000000),albums:[]}])} session={session}/>}
+      {view==="friends"&&(
+        <div style={{padding:"40px",minHeight:"calc(100dvh - 58px)",background:"#efe5d4"}}>
+          <div style={{fontFamily:"'Nunito',sans-serif",fontSize:28,fontWeight:900,color:"#463a29",marginBottom:8}}>Friends</div>
+          <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#a99878",marginBottom:28}}>Share your wall link with friends. When they visit it, they can add you as a friend too.</div>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:32}}>
+            <button onClick={copyShareLink} style={{background:"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"8px 18px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer"}}>{shareCopied?"✓ Copied!":"🔗 Copy my share link"}</button>
+          </div>
+          {friends.length===0?<div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#999",padding:"40px 0",textAlign:"center"}}>No friends added yet. Share your link with someone!</div>:(
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:16}}>
+              {friends.map(f=>(
+                <div key={f.id} style={{background:"#fff",borderRadius:12,padding:"16px",boxShadow:"0 2px 12px rgba(0,0,0,0.08)",display:"flex",flexDirection:"column",gap:10}}>
+                  <div style={{fontFamily:"'Nunito',sans-serif",fontSize:16,fontWeight:700,color:"#2a2118"}}>{f.nickname}</div>
+                  <div style={{fontFamily:"'Nunito',sans-serif",fontSize:10,color:"#bbb"}}>Added {new Date(f.added_at).toLocaleDateString()}</div>
+                  <div style={{display:"flex",gap:6,marginTop:"auto"}}>
+                    <button onClick={()=>viewFriendWall(f.friend_token,f.nickname)} style={{flex:1,background:"#2a9d8f",color:"#fff",border:"none",borderRadius:16,padding:"7px 0",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>View wall</button>
+                    <button onClick={()=>removeFriend(f.id)} style={{background:"none",border:"1px solid #ddd",borderRadius:16,padding:"7px 10px",fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#999",cursor:"pointer"}}>✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {viewingFriend&&(
+        <div style={{position:"fixed",inset:0,zIndex:200,display:"flex",flexDirection:"column",background:"#fff"}}>
+          <div style={{background:"#fff",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #e8e2d8",flexShrink:0}}>
+            <button onClick={()=>setViewingFriend(null)} style={{background:"none",border:"1px solid #ddd",borderRadius:20,padding:"5px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer",color:"#888"}}>{"← Back"}</button>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,fontWeight:700,color:"#2a2118"}}>{viewingFriend.nickname}{"'s Wall"}</div>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#888"}}>Read only</div>
+          </div>
+          <div style={{flex:1}}><SharedWallView items={viewingFriend.items} label={viewingFriend.nickname}/></div>
+        </div>
+      )}
       {openAlbum&&<PhotoBook album={openAlbum} onClose={()=>setOpenAlbum(null)} session={session}/>}
     </div>
   );
