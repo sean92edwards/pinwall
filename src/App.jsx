@@ -854,12 +854,19 @@ export default function Pinwall(){
   const [view,setView]=useState("wall");
   const [openAlbum,setOpenAlbum]=useState(null);
   const [session,setSession]=useState(null);
-  const [shelves,setShelves]=useState([{id:1,albums:[]}])
+  const [shelves,setShelves]=useState([{id:1,albums:[]}]);
   const [shareToken,setShareToken]=useState(null);
   const [shareCopied,setShareCopied]=useState(false);
   const [sharedView,setSharedView]=useState(null);
   const [friends,setFriends]=useState([]);
   const [viewingFriend,setViewingFriend]=useState(null);
+  const [username,setUsername]=useState(null);
+  const [needsUsername,setNeedsUsername]=useState(false);
+  const [usernameInput,setUsernameInput]=useState("");
+  const [usernameError,setUsernameError]=useState("");
+  const [searchQuery,setSearchQuery]=useState("");
+  const [searchResults,setSearchResults]=useState([]);
+  const [searching,setSearching]=useState(false);
   const shelfLoaded=useRef(false);
   const shelfSaveTimeout=useRef(null);
 
@@ -891,6 +898,11 @@ export default function Pinwall(){
     // Load friends
     supabase.from('friends').select('id,friend_token,nickname,added_at').eq('user_id',session.user.id).then(({data})=>{
       if(data)setFriends(data);
+    });
+    // Load profile (username)
+    supabase.from('profiles').select('username').eq('id',session.user.id).maybeSingle().then(({data})=>{
+      if(data?.username){setUsername(data.username);setNeedsUsername(false);}
+      else setNeedsUsername(true);
     });
   },[session]);
 
@@ -934,6 +946,32 @@ export default function Pinwall(){
     setFriends(prev=>prev.filter(f=>f.id!==friendId));
   };
 
+  const saveUsername=async()=>{
+    if(!usernameInput.trim()||usernameInput.trim().length<3){setUsernameError("At least 3 characters");return;}
+    const clean=usernameInput.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+    if(clean.length<3){setUsernameError("Letters, numbers, underscores only");return;}
+    const{error}=await supabase.from('profiles').insert({id:session.user.id,username:clean});
+    if(error){if(error.code==='23505')setUsernameError("Username taken");else setUsernameError(error.message);return;}
+    setUsername(clean);setNeedsUsername(false);
+  };
+
+  const searchUsers=async()=>{
+    if(!searchQuery.trim())return;
+    setSearching(true);
+    const{data,error}=await supabase.rpc('search_users',{search_term:searchQuery.trim()});
+    if(error)console.error('Search error:',error);
+    setSearchResults(data||[]);
+    setSearching(false);
+  };
+
+  const addFriendFromSearch=async(userId,uname,tokenId)=>{
+    if(!tokenId){alert('This user has no share token yet');return;}
+    const{data,error}=await supabase.from('friends').insert({user_id:session.user.id,friend_token:tokenId,nickname:uname}).select().single();
+    if(error){if(error.code==='23505')alert('Already added!');else console.error(error);return;}
+    if(data)setFriends(prev=>[...prev,data]);
+    setSearchResults(prev=>prev.filter(r=>r.user_id!==userId));
+  };
+
   const copyShareLink=async()=>{
     if(!shareToken)return;
     const url=`${window.location.origin}${window.location.pathname}?share=${shareToken}`;
@@ -970,6 +1008,20 @@ export default function Pinwall(){
 
   if(!session) return <Auth/>;
 
+  if(needsUsername) return(
+    <div style={{minHeight:"100vh",background:"#efe5d4",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:"#fff",borderRadius:12,padding:"40px 32px",maxWidth:360,width:"90%",textAlign:"center",boxShadow:"0 8px 40px rgba(0,0,0,0.12)"}}>
+        <div style={{fontSize:36,marginBottom:12}}>👋</div>
+        <div style={{fontFamily:"'Nunito',sans-serif",fontSize:22,fontWeight:900,marginBottom:6}}>Choose a username</div>
+        <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#888",marginBottom:24}}>Friends will find you by this name</div>
+        <input value={usernameInput} onChange={e=>setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))} placeholder="e.g. sean_92" onKeyDown={e=>{if(e.key==='Enter')saveUsername();}} style={{width:"100%",padding:"12px 14px",border:"2px solid #ddd",borderRadius:8,fontFamily:"'Nunito',sans-serif",fontSize:16,outline:"none",marginBottom:8,textAlign:"center"}}/>
+        {usernameError&&<div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#e63946",marginBottom:8}}>{usernameError}</div>}
+        <div style={{fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#bbb",marginBottom:20}}>Lowercase letters, numbers, underscores. Min 3 chars.</div>
+        <button onClick={saveUsername} style={{width:"100%",background:"#1a1a1a",color:"white",border:"none",borderRadius:28,padding:"14px",fontFamily:"'Nunito',sans-serif",fontSize:14,fontWeight:700,cursor:"pointer"}}>Continue</button>
+      </div>
+    </div>
+  );
+
   return(
     <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:46px!important;padding:0 12px!important}.pinwall-nav .logo-text{font-size:20px!important}.pinwall-nav .nav-btn{font-size:11px!important;padding:4px 10px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}}`}</style>
@@ -996,15 +1048,35 @@ export default function Pinwall(){
       {view==="friends"&&(
         <div style={{padding:"40px",minHeight:"calc(100dvh - 58px)",background:"#efe5d4"}}>
           <div style={{fontFamily:"'Nunito',sans-serif",fontSize:28,fontWeight:900,color:"#463a29",marginBottom:8}}>Friends</div>
-          <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#a99878",marginBottom:28}}>Share your wall link with friends. When they visit it, they can add you as a friend too.</div>
+          <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#a99878",marginBottom:24}}>Find friends by username or share your link.</div>
+          
+          <div style={{display:"flex",gap:8,marginBottom:24,maxWidth:400}}>
+            <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')searchUsers();}} placeholder="Search by username..." style={{flex:1,padding:"10px 14px",border:"2px solid #ddd",borderRadius:8,fontFamily:"'Nunito',sans-serif",fontSize:14,outline:"none"}}/>
+            <button onClick={searchUsers} disabled={searching} style={{background:"#1a1a1a",color:"#fff",border:"none",borderRadius:8,padding:"10px 18px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer",opacity:searching?0.6:1}}>{searching?"...":"Search"}</button>
+          </div>
+
+          {searchResults.length>0&&<div style={{marginBottom:28}}>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,color:"#a99878",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.1em"}}>Results</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8,maxWidth:400}}>
+              {searchResults.map(r=>(
+                <div key={r.user_id} style={{background:"#fff",borderRadius:8,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
+                  <span style={{fontFamily:"'Nunito',sans-serif",fontSize:14,fontWeight:700,color:"#2a2118"}}>@{r.username}</span>
+                  <button onClick={()=>addFriendFromSearch(r.user_id,r.username,r.token_id)} style={{background:"#2a9d8f",color:"#fff",border:"none",borderRadius:16,padding:"6px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>Add</button>
+                </div>
+              ))}
+            </div>
+          </div>}
+
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:32}}>
             <button onClick={copyShareLink} style={{background:"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"8px 18px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer"}}>{shareCopied?"✓ Copied!":"🔗 Copy my share link"}</button>
+            {username&&<span style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#a99878"}}>Your username: <strong>@{username}</strong></span>}
           </div>
-          {friends.length===0?<div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#999",padding:"40px 0",textAlign:"center"}}>No friends added yet. Share your link with someone!</div>:(
+
+          {friends.length===0?<div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#999",padding:"40px 0",textAlign:"center"}}>No friends added yet. Search for someone or share your link!</div>:(
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:16}}>
               {friends.map(f=>(
                 <div key={f.id} style={{background:"#fff",borderRadius:12,padding:"16px",boxShadow:"0 2px 12px rgba(0,0,0,0.08)",display:"flex",flexDirection:"column",gap:10}}>
-                  <div style={{fontFamily:"'Nunito',sans-serif",fontSize:16,fontWeight:700,color:"#2a2118"}}>{f.nickname}</div>
+                  <div style={{fontFamily:"'Nunito',sans-serif",fontSize:16,fontWeight:700,color:"#2a2118"}}>@{f.nickname}</div>
                   <div style={{fontFamily:"'Nunito',sans-serif",fontSize:10,color:"#bbb"}}>Added {new Date(f.added_at).toLocaleDateString()}</div>
                   <div style={{display:"flex",gap:6,marginTop:"auto"}}>
                     <button onClick={()=>viewFriendWall(f.friend_token,f.nickname)} style={{flex:1,background:"#2a9d8f",color:"#fff",border:"none",borderRadius:16,padding:"7px 0",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>View wall</button>
