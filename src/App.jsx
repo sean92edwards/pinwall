@@ -79,6 +79,10 @@ function HorizontalWall({session}){
   const [doodleWidth,setDoodleWidth]=useState(3);
   const [currentPath,setCurrentPath]=useState(null);
   const doodlePoints=useRef([]);
+  const doodleColorRef=useRef(doodleColor);
+  const doodleWidthRef=useRef(doodleWidth);
+  useEffect(()=>{doodleColorRef.current=doodleColor;},[doodleColor]);
+  useEffect(()=>{doodleWidthRef.current=doodleWidth;},[doodleWidth]);
   const [view,setView]=useState({x:80,y:80,zoom:1});
   const [vp,setVp]=useState({w:1200,h:700});
   const dragStart=useRef(null);
@@ -184,7 +188,7 @@ function HorizontalWall({session}){
         const pathData=pts.map((p,i)=>`${i===0?'M':'L'}${p.x-minX} ${p.y-minY}`).join(' ');
         const w=Math.max(20,maxX-minX);
         const h=Math.max(20,maxY-minY);
-        setItems(prev=>[{id:Date.now(),type:'doodle',path:pathData,cx,cy,w,h,color:doodleColor,strokeWidth:doodleWidth,rot:0,zIndex:maxZ+1},...prev]);
+        setItems(prev=>[{id:Date.now(),type:'doodle',path:pathData,cx,cy,w,h,color:doodleColorRef.current,strokeWidth:doodleWidthRef.current,rot:0,zIndex:maxZ+1},...prev]);
         setMaxZ(z=>z+1);
         doodlePoints.current=[];
         setCurrentPath(null);
@@ -381,6 +385,9 @@ function HorizontalWall({session}){
           {["#e63946","#1a1a1a","#2a9d8f","#e9c46a","#457b9d","#e76f51","#ffffff"].map(c=><div key={c} onClick={()=>setDoodleColor(c)} style={{width:20,height:20,borderRadius:"50%",background:c,border:doodleColor===c?"2px solid #4a90e2":"2px solid rgba(255,255,255,0.3)",cursor:"pointer"}}/>)}
           <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
           {[2,4,8].map(w=><div key={w} onClick={()=>setDoodleWidth(w)} style={{width:24,height:24,borderRadius:"50%",background:doodleWidth===w?"rgba(255,255,255,0.2)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><div style={{width:w*2,height:w*2,borderRadius:"50%",background:"white"}}/></div>)}
+          <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
+          <button onClick={()=>{const last=items.find(i=>i.type==='doodle');if(last)setItems(p=>p.filter(i=>i.id!==last.id));}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Undo</button>
+          <button onClick={()=>setItems(p=>p.filter(i=>i.type!=='doodle'))} style={{background:"#e63946",border:"none",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Clear all</button>
         </div>}
         <div style={{position:"absolute",right:18,top:"50%",transform:"translateY(-50%)",display:"flex",gap:10,alignItems:"center"}}>
           {editing&&<span style={{fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#b9a888"}}>drag · ↻ rotate · ⤡ resize · double-click note to edit</span>}
