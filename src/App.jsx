@@ -81,8 +81,10 @@ function HorizontalWall({session}){
   const doodlePoints=useRef([]);
   const doodleColorRef=useRef(doodleColor);
   const doodleWidthRef=useRef(doodleWidth);
+  const doodlingRef=useRef(false);
   useEffect(()=>{doodleColorRef.current=doodleColor;},[doodleColor]);
   useEffect(()=>{doodleWidthRef.current=doodleWidth;},[doodleWidth]);
+  useEffect(()=>{doodlingRef.current=doodling;},[doodling]);
   const [view,setView]=useState({x:80,y:80,zoom:1});
   const [vp,setVp]=useState({w:1200,h:700});
   const dragStart=useRef(null);
@@ -248,7 +250,7 @@ function HorizontalWall({session}){
     if(tag==='BUTTON'||tag==='INPUT'||tag==='TEXTAREA'||tag==='LABEL'||tag==='A'||e.target.closest('button,input,textarea,label,a,[data-control]'))return;
     // If an item handler already claimed this touch (rotate/resize/drag), skip
     if(dragStart.current)return;
-    if(doodling&&e.touches.length===1){
+    if(doodlingRef.current&&e.touches.length===1){
       // Start doodle on touch
       const t=e.touches[0];
       const r=rectOf();const v=viewRef.current;
@@ -329,8 +331,7 @@ function HorizontalWall({session}){
   const onViewportMouseDown=e=>{
     mousedownOnItem.current=false;
     if(e.button!==0)return;
-    if(doodling){
-      // Start drawing
+    if(doodlingRef.current){
       const r=rectOf();const v=viewRef.current;
       const wx=(e.clientX-(r?.left||0)-v.x)/v.zoom;
       const wy=(e.clientY-(r?.top||0)-v.y)/v.zoom;
