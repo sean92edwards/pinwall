@@ -360,10 +360,10 @@ function HorizontalWall({session}){
   const sorted=[...visible].sort((a,b)=>(a.zIndex||1)-(b.zIndex||1));
 
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"calc(100dvh - 58px)"}}>
-      <div style={{background:"#ffffff",borderBottom:"1px solid #e8e0d0",padding:"10px 20px",display:"flex",alignItems:"center",flexShrink:0,zIndex:90,position:"relative",boxShadow:"0 2px 8px rgba(120,80,30,0.08)"}}>
-        <div style={{margin:"0 auto",display:"flex",alignItems:"center",gap:2,background:"#f5f0e8",borderRadius:30,padding:5,border:"1px solid #e0d5c0",boxShadow:"0 2px 10px rgba(120,90,40,0.10)"}}>
-          <label style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:uploading?"default":"pointer",opacity:uploading?0.55:1}} onMouseEnter={e=>{if(!uploading)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+    <div style={{display:"flex",flexDirection:"column",height:"calc(100dvh - 44px)"}}>
+      <div className="wall-toolbar" style={{background:"#ffffff",borderBottom:"1px solid #e8e0d0",padding:"10px 20px",display:"flex",alignItems:"center",flexShrink:0,zIndex:90,position:"relative",boxShadow:"0 2px 8px rgba(120,80,30,0.08)"}}>
+        <div className="tb-pill" style={{margin:"0 auto",display:"flex",alignItems:"center",gap:2,background:"#f5f0e8",borderRadius:30,padding:5,border:"1px solid #e0d5c0",boxShadow:"0 2px 10px rgba(120,90,40,0.10)"}}>
+          <label className="tb-btn" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:uploading?"default":"pointer",opacity:uploading?0.55:1}} onMouseEnter={e=>{if(!uploading)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
             <span style={{fontSize:15}}>{uploading?"⏳":"📷"}</span>{uploading?"Uploading…":"Photo"}
             <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>addPhoto(e.target.files[0])} disabled={uploading}/>
           </label>
@@ -391,8 +391,7 @@ function HorizontalWall({session}){
           <button onClick={()=>setItems(p=>p.filter(i=>i.type!=='doodle'))} style={{background:"#e63946",border:"none",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Clear all</button>
         </div>}
         <div style={{position:"absolute",right:18,top:"50%",transform:"translateY(-50%)",display:"flex",gap:10,alignItems:"center"}}>
-          {editing&&<span style={{fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#b9a888"}}>drag · ↻ rotate · ⤡ resize · double-click note to edit</span>}
-          <button onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,background:editing?"#2a9d8f":"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
+          <button onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} className="tb-btn" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,background:editing?"#2a9d8f":"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
         </div>
       </div>
       <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",background:"#ddb074",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75 0.35' numOctaves='5' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.4'/%3E%3C/filter%3E%3Crect width='400' height='400' fill='%23e3b87e' opacity='1'/%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.28' style='mix-blend-mode:multiply'/%3E%3C/svg%3E"),repeating-linear-gradient(92deg,rgba(220,170,100,0.07) 0px,rgba(220,170,100,0.07) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(2deg,rgba(140,80,30,0.05) 0px,rgba(140,80,30,0.05) 1px,transparent 1px,transparent 22px)`,backgroundSize:"400px 400px,400px 400px,400px 400px",userSelect:"none"}}>
@@ -1025,24 +1024,23 @@ export default function Pinwall(){
 
   return(
     <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:46px!important;padding:0 12px!important}.pinwall-nav .logo-text{font-size:20px!important}.pinwall-nav .nav-btn{font-size:11px!important;padding:4px 10px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:44px!important;padding:0 10px!important}.pinwall-nav .logo-text{font-size:18px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:11px!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}}`}</style>
       <div className="pinwall-nav" style={{background:"#ffffff",borderBottom:"1px solid #e8e2d8",padding:"0 24px",display:"flex",alignItems:"center",justifyContent:"space-between",height:58,position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:26,lineHeight:1}}>📌</span>
-          <span style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:26,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
+          <span style={{fontSize:22,lineHeight:1}}>📌</span>
+          <span className="logo-text" style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:22,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:6}}>
-          {[["wall","📌 My Wall"],["shelf","📚 Library"],["friends","👥 Friends"]].map(([v,label])=>(
-            <button key={v} onClick={()=>{setView(v);if(v==='wall'&&openAlbum)setOpenAlbum(null);}} style={{background:"none",color:view===v?"#1a1a1a":"#888",border:"none",borderRadius:20,padding:"6px 18px",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",transition:"color 0.15s",borderBottom:view===v?"2px solid #1a1a1a":"2px solid transparent"}}>{label}</button>
+        <div style={{display:"flex",alignItems:"center",gap:2}}>
+          {[["wall","📌","My Wall"],["shelf","📚","Library"],["friends","👥","Friends"]].map(([v,icon,label])=>(
+            <button key={v} onClick={()=>{setView(v);if(v==='wall'&&openAlbum)setOpenAlbum(null);}} style={{background:"none",color:view===v?"#1a1a1a":"#888",border:"none",borderRadius:20,padding:"6px 12px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer",borderBottom:view===v?"2px solid #1a1a1a":"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1,lineHeight:1}}><span style={{fontSize:16}}>{icon}</span><span className="nav-label" style={{fontSize:10}}>{label}</span></button>
           ))}
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <button onClick={copyShareLink} style={{display:"inline-flex",alignItems:"center",gap:6,background:shareCopied?"#2a9d8f":"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"6px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer",transition:"background 0.2s"}}>
-            {shareCopied?"✓ Link copied!":"🔗 Share wall"}
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <button onClick={copyShareLink} style={{display:"inline-flex",alignItems:"center",gap:4,background:shareCopied?"#2a9d8f":"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"6px 12px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+            {shareCopied?"✓":"🔗"}
           </button>
-          <button onClick={()=>supabase.auth.signOut()} style={{background:"none",border:"1px solid #ddd",borderRadius:20,padding:"5px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer",color:"#888"}}>Sign out</button>
-          <div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:14,boxShadow:"0 2px 6px rgba(180,40,30,0.3)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
-        </div>  
+          <div onClick={()=>supabase.auth.signOut()} style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:12,cursor:"pointer"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
+        </div>
       </div>
       {view==="wall"&&<HorizontalWall session={session}/>}
       {view==="shelf"&&<Bookshelf onOpenAlbum={setOpenAlbum} shelves={shelves} onAddAlbum={(shelfId,album)=>setShelves(prev=>prev.map(s=>s.id===shelfId?{...s,albums:[...s.albums,album]}:s))} onDeleteAlbum={id=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.filter(a=>a.id!==id)})));if(openAlbum?.id===id)setOpenAlbum(null);}} onRenameAlbum={(id,name)=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,name}:a)})));if(openAlbum?.id===id)setOpenAlbum(prev=>({...prev,name}));}} onSetCover={(id,url)=>setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,coverUrl:url}:a)})))} onAddShelf={()=>setShelves(prev=>[...prev,{id:Math.floor(Math.random()*2000000000),albums:[]}])} session={session}/>}
