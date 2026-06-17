@@ -34,11 +34,8 @@ export default function Auth() {
           <span style={{ fontSize:28, lineHeight:1 }}>📌</span>
           <span style={{ fontFamily:"'Nunito',sans-serif", fontWeight:900, fontSize:28, letterSpacing:"-0.02em", color:"#1a1a1a" }}>Pinwall</span>
         </div>
-        <div style={{ fontFamily:"'Nunito',sans-serif", fontSize:22, fontWeight:800, marginBottom:6, color:"#1a1a1a" }}>
+        <div style={{ fontFamily:"'Nunito',sans-serif", fontSize:22, fontWeight:800, marginBottom:28, color:"#1a1a1a" }}>
           {isSignUp ? "Create your account" : "Welcome back"}
-        </div>
-        <div style={{ fontFamily:"'Nunito',sans-serif", fontSize:13, color:"#888", marginBottom:28 }}>
-          {isSignUp ? "Pin your memories to the wall." : "Sign in to your Pinwall"}
         </div>
         <input
           type="email" placeholder="Email address" value={email}
