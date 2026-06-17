@@ -5,13 +5,13 @@ import Auth from "./Auth";
 const STICKERS = ["⭐","❤️","🌟","✨","🎉","🌈","🌸","🦋","🍀","🎨","🔥","💫","🌺","🦄","🍭","🌙","☀️","🎀","🐚","🍂","🦊","🐝","🍓","🎠","🌊","🪄","🏆","🎯","🎪","🎭","😂","😍","🥳","😭","🤩","😎","🥰","😅","🙌","👏"];
 
 const BOOK_THEMES = [
-  {bg:"#2c5f2e",spine:"#1e4220",text:"#a8d5aa",accent:"#5c9e5e"},
-  {bg:"#8b1a1a",spine:"#5c1010",text:"#f0c4c4",accent:"#c44444"},
-  {bg:"#1a3a5c",spine:"#102540",text:"#a0c4e8",accent:"#3a7abf"},
-  {bg:"#5c3d1e",spine:"#3d2810",text:"#e8c99a",accent:"#a07040"},
-  {bg:"#3d1a5c",spine:"#280f3d",text:"#c4a0e8",accent:"#7a3abf"},
-  {bg:"#1a5c3d",spine:"#103d28",text:"#a0e8c4",accent:"#3abf7a"},
-  {bg:"#4a4a1a",spine:"#323210",text:"#e8e49a",accent:"#9a9440"},
+  {c1:"#f7da78",c2:"#f0c94f",text:"#7c5a1c",shadow:"rgba(150,110,30,0.18)"},
+  {c1:"#b3da9c",c2:"#97c97f",text:"#3f6b35",shadow:"rgba(60,110,40,0.16)"},
+  {c1:"#bcd5ef",c2:"#a6c5ec",text:"#2f5488",shadow:"rgba(50,80,140,0.16)"},
+  {c1:"#f5bf92",c2:"#eda36e",text:"#8a4a22",shadow:"rgba(150,90,40,0.16)"},
+  {c1:"#d2c0ef",c2:"#bca6e2",text:"#5a3f86",shadow:"rgba(95,70,140,0.16)"},
+  {c1:"#97d6c9",c2:"#79c4b4",text:"#1f6a5e",shadow:"rgba(35,110,95,0.16)"},
+  {c1:"#f0c6d2",c2:"#e8a8bc",text:"#8a3f5e",shadow:"rgba(140,60,90,0.16)"},
 ];
 
 const BUBBLE_COLORS = ["#ffffff","#fff9c4","#fce4ec","#e3f2fd","#e8f5e9","#fde8c8","#f3e5f5","#e0f7fa"];
@@ -61,7 +61,7 @@ const INITIAL_ITEMS=[
 
 function seededRandom(seed){let s=seed;return()=>{s=(s*16807+0)%2147483647;return(s-1)/2147483646;};}
 function initBookPositions(photos){const pos={};photos.forEach((photo,i)=>{const slot=SCATTER[i%SCATTER.length];const dims=ASPECTS[photo.aspect]||ASPECTS.landscape;const rnd=seededRandom(photo.id*137+i*31);pos[photo.id]={cx:slot.cx+(rnd()-0.5)*50,cy:slot.cy+(rnd()-0.5)*40,w:dims.w,h:dims.h,rot:(rnd()-0.5)*22,zIndex:i+1};});return pos;}
-function tb(bg,col){return{background:bg,color:col,border:"none",borderRadius:20,padding:"7px 15px",fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.15)"};}
+function tb(bg,col){return{background:bg,color:col,border:"none",borderRadius:20,padding:"7px 15px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",cursor:"pointer",boxShadow:"0 1px 4px rgba(0,0,0,0.15)"};}
 function hdl(pos){const b={position:"absolute",zIndex:10,background:"#4a90e2",cursor:"grab",display:"flex",alignItems:"center",justifyContent:"center",color:"white",boxShadow:"0 1px 6px rgba(0,0,0,0.3)",border:"2px solid white"};if(pos==="top")return{...b,top:-30,left:"50%",transform:"translateX(-50%)",width:24,height:24,borderRadius:"50%",fontSize:14};if(pos==="br")return{...b,bottom:-5,right:-5,width:20,height:20,borderRadius:5,fontSize:11,cursor:"se-resize"};}
 const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
 
@@ -299,30 +299,30 @@ function HorizontalWall({session}){
     <div style={{display:"flex",flexDirection:"column",height:"calc(100dvh - 58px)"}}>
       <div style={{background:"#ffffff",borderBottom:"1px solid #e8e0d0",padding:"10px 20px",display:"flex",alignItems:"center",flexShrink:0,zIndex:90,position:"relative",boxShadow:"0 2px 8px rgba(120,80,30,0.08)"}}>
         <div style={{margin:"0 auto",display:"flex",alignItems:"center",gap:2,background:"#f5f0e8",borderRadius:30,padding:5,border:"1px solid #e0d5c0",boxShadow:"0 2px 10px rgba(120,90,40,0.10)"}}>
-          <label style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,fontFamily:"'Lato',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:uploading?"default":"pointer",opacity:uploading?0.55:1}} onMouseEnter={e=>{if(!uploading)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+          <label style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:uploading?"default":"pointer",opacity:uploading?0.55:1}} onMouseEnter={e=>{if(!uploading)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
             <span style={{fontSize:15}}>{uploading?"⏳":"📷"}</span>{uploading?"Uploading…":"Photo"}
             <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>addPhoto(e.target.files[0])} disabled={uploading}/>
           </label>
           <div style={{width:1,height:20,background:"#d8cdb8"}}/>
           <div style={{position:"relative"}}>
-            <button onClick={()=>setShowStickers(s=>!s)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:showStickers?"#ece4d4":"transparent",fontFamily:"'Lato',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>{if(!showStickers)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!showStickers)e.currentTarget.style.background="transparent";}}><span style={{fontSize:15}}>⭐</span>Sticker</button>
+            <button onClick={()=>setShowStickers(s=>!s)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:showStickers?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>{if(!showStickers)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!showStickers)e.currentTarget.style.background="transparent";}}><span style={{fontSize:15}}>⭐</span>Sticker</button>
             {showStickers&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:46,left:"50%",transform:"translateX(-50%)",background:"#fffdf8",border:"1px solid #ece1cf",borderRadius:14,padding:12,zIndex:200,boxShadow:"0 12px 36px rgba(80,60,20,0.22)",width:264}}>
-              <div style={{fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,color:"#b9a888",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:8}}>Tap to add</div>
+              <div style={{fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,color:"#b9a888",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:8}}>Tap to add</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                 {STICKERS.map((em,i)=><button key={i} onClick={()=>addSticker(em)} style={{background:"#f6efe2",border:"1px solid #ece1cf",borderRadius:9,padding:"5px 6px",fontSize:20,cursor:"pointer",lineHeight:1,transition:"transform 0.12s"}} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.25)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>{em}</button>)}
               </div>
             </div>}
           </div>
           <div style={{width:1,height:20,background:"#d8cdb8"}}/>
-          <button onClick={addBubble} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:"transparent",fontFamily:"'Lato',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background="#ece4d4"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}><span style={{fontSize:15}}>📝</span>Note</button>
+          <button onClick={addBubble} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background="#ece4d4"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}><span style={{fontSize:15}}>📝</span>Note</button>
         </div>
         <div style={{position:"absolute",right:18,top:"50%",transform:"translateY(-50%)",display:"flex",gap:10,alignItems:"center"}}>
-          {editing&&<span style={{fontFamily:"'Lato',sans-serif",fontSize:11,color:"#b9a888"}}>drag · ↻ rotate · ⤡ resize · double-click note to edit</span>}
-          <button onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,background:editing?"#2a9d8f":"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
+          {editing&&<span style={{fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#b9a888"}}>drag · ↻ rotate · ⤡ resize · double-click note to edit</span>}
+          <button onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,background:editing?"#2a9d8f":"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
         </div>
       </div>
-      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:editing?"default":"grab",touchAction:"none",background:"#d4956a",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75 0.35' numOctaves='5' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.4'/%3E%3C/filter%3E%3Crect width='400' height='400' fill='%23e0a878' opacity='1'/%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.28' style='mix-blend-mode:multiply'/%3E%3C/svg%3E"),repeating-linear-gradient(92deg,rgba(220,170,100,0.07) 0px,rgba(220,170,100,0.07) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(2deg,rgba(140,80,30,0.05) 0px,rgba(140,80,30,0.05) 1px,transparent 1px,transparent 22px)`,backgroundSize:"400px 400px,400px 400px,400px 400px",userSelect:"none"}}>
-        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 80px rgba(60,30,5,0.20)",background:"radial-gradient(ellipse at 50% 0%,rgba(255,220,160,0.15) 0%,transparent 55%)",pointerEvents:"none",zIndex:5}}/>
+      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:editing?"default":"grab",touchAction:"none",background:"#ddb074",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75 0.35' numOctaves='5' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.4'/%3E%3C/filter%3E%3Crect width='400' height='400' fill='%23e3b87e' opacity='1'/%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.28' style='mix-blend-mode:multiply'/%3E%3C/svg%3E"),repeating-linear-gradient(92deg,rgba(220,170,100,0.07) 0px,rgba(220,170,100,0.07) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(2deg,rgba(140,80,30,0.05) 0px,rgba(140,80,30,0.05) 1px,transparent 1px,transparent 22px)`,backgroundSize:"400px 400px,400px 400px,400px 400px",userSelect:"none"}}>
+        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 70px rgba(110,65,20,0.22)",background:"radial-gradient(ellipse at 50% 0%,rgba(255,220,160,0.15) 0%,transparent 55%)",pointerEvents:"none",zIndex:5}}/>
         <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`}}>
           {sorted.map(item=>{
             const isSel=editing&&selected===item.id;
@@ -351,12 +351,12 @@ function HorizontalWall({session}){
             return null;
           })}
         </div>
-        <div className="wall-hint" style={{position:"absolute",left:16,bottom:14,zIndex:60,fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.04em",color:"rgba(255,255,255,0.55)",pointerEvents:"none"}}>drag to pan · scroll to zoom · Shift + scroll to pan</div>
+        <div className="wall-hint" style={{position:"absolute",left:16,bottom:14,zIndex:60,fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.04em",color:"rgba(255,255,255,0.55)",pointerEvents:"none"}}>drag to pan · scroll to zoom · Shift + scroll to pan</div>
         <div className="zoom-controls" style={{position:"absolute",right:16,bottom:16,zIndex:60,display:"flex",alignItems:"center",gap:6}}>
           <button onClick={()=>zoomBy(1/1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>−</button>
-          <div style={{minWidth:52,textAlign:"center",background:"rgba(44,38,32,0.85)",color:"#fff",borderRadius:9,padding:"7px 8px",fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700}}>{Math.round(zoom*100)}%</div>
+          <div style={{minWidth:52,textAlign:"center",background:"rgba(44,38,32,0.85)",color:"#fff",borderRadius:9,padding:"7px 8px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700}}>{Math.round(zoom*100)}%</div>
           <button onClick={()=>zoomBy(1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>+</button>
-          <button onClick={resetView} style={{height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:11,fontWeight:700,fontFamily:"'Lato',sans-serif",cursor:"pointer",padding:"0 12px"}}>Reset</button>
+          <button onClick={resetView} style={{height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:11,fontWeight:700,fontFamily:"'Nunito',sans-serif",cursor:"pointer",padding:"0 12px"}}>Reset</button>
         </div>
       </div>
      {viewPhoto&&<div onClick={()=>setViewPhoto(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
@@ -388,13 +388,13 @@ function Bookshelf({onOpenAlbum,shelves,onAddAlbum,onDeleteAlbum,onRenameAlbum,o
     setUploadingCoverId(null);
   };
   return(
-    <div style={{position:"relative",overflow:"auto",minHeight:"calc(100dvh - 58px)",padding:"40px 40px 70px",background:"#efe5d4",backgroundImage:"radial-gradient(ellipse 90% 60% at 50% -10%,rgba(255,250,238,0.7) 0%,transparent 60%),radial-gradient(ellipse at 50% 120%,rgba(120,90,50,0.10) 0%,transparent 55%)"}}>
+    <div style={{position:"relative",overflow:"auto",minHeight:"calc(100dvh - 58px)",padding:"40px 40px 70px",background:"#f3ebda",backgroundImage:"radial-gradient(ellipse 90% 60% at 50% -10%,rgba(255,250,238,0.7) 0%,transparent 60%),radial-gradient(ellipse at 50% 120%,rgba(120,90,50,0.10) 0%,transparent 55%)"}}>
       <div style={{position:"absolute",right:26,bottom:70,fontSize:60,pointerEvents:"none",opacity:0.85,filter:"drop-shadow(0 8px 10px rgba(0,0,0,0.12))"}}>🪴</div>
       <div style={{position:"absolute",right:120,top:74,fontSize:20,transform:"rotate(12deg)",pointerEvents:"none",opacity:0.55}}>✨</div>
       <div style={{position:"absolute",left:"42%",top:26,fontSize:16,transform:"rotate(-10deg)",pointerEvents:"none",opacity:0.45}}>💛</div>
       <div style={{position:"relative",zIndex:2,marginBottom:34}}>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:34,fontWeight:900,color:"#463a29",letterSpacing:"-0.01em"}}>My Library <span style={{color:"#e07a8a"}}>♥</span></div>
-        <div style={{fontFamily:"'Lato',sans-serif",fontSize:12,color:"#a99878",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:4}}>Click any book to open it</div>
+        <div style={{fontFamily:"'Caveat',cursive",fontSize:44,fontWeight:700,color:"#473a2a",lineHeight:0.9}}>My Library <span style={{color:"#e88a96"}}>♥</span></div>
+        <div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#a99878",letterSpacing:"0.12em",textTransform:"uppercase",marginTop:4}}>Click any book to open it</div>
       </div>
       {shelves.map((shelf)=>(
         <div key={shelf.id} style={{marginBottom:46,position:"relative",zIndex:2}}>
@@ -408,40 +408,40 @@ function Bookshelf({onOpenAlbum,shelves,onAddAlbum,onDeleteAlbum,onRenameAlbum,o
                 <div key={album.id} style={{position:"relative"}} onMouseEnter={()=>setHoveredId(album.id)} onMouseLeave={()=>setHoveredId(null)}>
                   {/* Hover controls */}
                   {hoveredId===album.id&&!renamingId&&<div style={{position:"absolute",top:-32,left:"50%",transform:"translateX(-50%)",display:"flex",gap:4,zIndex:20,whiteSpace:"nowrap"}} onClick={e=>e.stopPropagation()}>
-                    <button onClick={e=>{e.stopPropagation();setRenamingId(album.id);}} style={{background:"#4a90e2",color:"white",border:"none",borderRadius:12,padding:"3px 9px",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>✏ Rename</button>
-                    <label style={{background:"#2a9d8f",color:"white",border:"none",borderRadius:12,padding:"3px 9px",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:uploadingCoverId===album.id?"default":"pointer",opacity:uploadingCoverId===album.id?0.6:1}}>
+                    <button onClick={e=>{e.stopPropagation();setRenamingId(album.id);}} style={{background:"#4a90e2",color:"white",border:"none",borderRadius:12,padding:"3px 9px",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>✏ Rename</button>
+                    <label style={{background:"#2a9d8f",color:"white",border:"none",borderRadius:12,padding:"3px 9px",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:uploadingCoverId===album.id?"default":"pointer",opacity:uploadingCoverId===album.id?0.6:1}}>
                       {uploadingCoverId===album.id?"⏳":"🖼 Cover"}
                       <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>handleCoverUpload(album.id,e.target.files[0])} disabled={uploadingCoverId===album.id}/>
                     </label>
-                    <button onClick={e=>{e.stopPropagation();onDeleteAlbum(album.id);}} style={{background:"#e63946",color:"white",border:"none",borderRadius:12,padding:"3px 9px",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>✕</button>
+                    <button onClick={e=>{e.stopPropagation();onDeleteAlbum(album.id);}} style={{background:"#e63946",color:"white",border:"none",borderRadius:12,padding:"3px 9px",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>✕</button>
                   </div>}
                   {/* Inline rename input */}
                   {renamingId===album.id&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:-40,left:"50%",transform:"translateX(-50%)",background:"#2c2620",borderRadius:8,padding:"6px 10px",zIndex:20,boxShadow:"0 4px 16px rgba(0,0,0,0.5)",whiteSpace:"nowrap",display:"flex",gap:6,alignItems:"center"}}>
                     <input autoFocus defaultValue={album.name} onBlur={e=>{onRenameAlbum(album.id,e.target.value||album.name);setRenamingId(null);}} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();if(e.key==='Escape')setRenamingId(null);}} style={{background:"transparent",border:"none",borderBottom:"1px solid #c8a96e",outline:"none",color:"white",fontFamily:"'Caveat',cursive",fontSize:16,width:140,display:"block"}}/>
                     <span onClick={()=>setRenamingId(null)} style={{color:"#888",cursor:"pointer",fontSize:12}}>✕</span>
                   </div>}
-                  <div onClick={()=>onOpenAlbum(album)} style={{width:128,height:172,borderRadius:"6px 9px 9px 6px",cursor:"pointer",position:"relative",overflow:"hidden",background:`linear-gradient(150deg,${theme.bg} 0%,${theme.spine} 118%)`,boxShadow:"0 14px 26px rgba(60,40,15,0.32)",transform:`rotate(${tilt}deg)`,transformOrigin:"bottom center",transition:"transform 0.22s,box-shadow 0.22s",userSelect:"none",borderLeft:`5px solid ${theme.spine}`}}
-                    onMouseEnter={e=>{e.currentTarget.style.transform=`rotate(${tilt}deg) translateY(-12px)`;e.currentTarget.style.boxShadow="0 24px 40px rgba(60,40,15,0.40)";}}
-                    onMouseLeave={e=>{e.currentTarget.style.transform=`rotate(${tilt}deg)`;e.currentTarget.style.boxShadow="0 14px 26px rgba(60,40,15,0.32)";}}>
-                    <div style={{position:"absolute",top:8,right:8,fontSize:18,filter:"drop-shadow(0 2px 3px rgba(0,0,0,0.3))",zIndex:3}}>{album.emoji}</div>
-                    <div style={{position:"absolute",top:16,left:"50%",transform:"translateX(-50%) rotate(-3deg)",background:"#fff",padding:"5px 5px 15px",boxShadow:"0 4px 10px rgba(0,0,0,0.25)",width:84,overflow:"hidden"}}>
+                  <div onClick={()=>onOpenAlbum(album)} style={{width:128,height:172,borderRadius:"5px 11px 11px 5px",cursor:"pointer",position:"relative",overflow:"hidden",background:`linear-gradient(150deg,${theme.c1},${theme.c2})`,boxShadow:`0 13px 22px rgba(110,75,25,0.28),inset 8px 0 11px ${theme.shadow},inset -2px 0 3px rgba(255,255,255,0.4)`,transform:`rotate(${tilt}deg)`,transformOrigin:"bottom center",transition:"transform 0.22s,box-shadow 0.22s",userSelect:"none"}}
+                    onMouseEnter={e=>{e.currentTarget.style.transform=`rotate(${tilt}deg) translateY(-12px)`;e.currentTarget.style.boxShadow=`0 24px 38px rgba(110,75,25,0.40),inset 8px 0 11px ${theme.shadow},inset -2px 0 3px rgba(255,255,255,0.4)`;}}
+                    onMouseLeave={e=>{e.currentTarget.style.transform=`rotate(${tilt}deg)`;e.currentTarget.style.boxShadow=`0 13px 22px rgba(110,75,25,0.28),inset 8px 0 11px ${theme.shadow},inset -2px 0 3px rgba(255,255,255,0.4)`;}}>
+                    <div style={{position:"absolute",left:8,top:0,bottom:0,width:2,background:"rgba(255,255,255,0.3)"}}/><div style={{position:"absolute",top:13,left:9,right:8,textAlign:"center",fontFamily:"'Caveat',cursive",fontSize:17,fontWeight:700,color:theme.text,lineHeight:0.98,maxHeight:40,overflow:"hidden"}}>{album.name}</div>
+                    <div style={{position:"absolute",bottom:14,left:"50%",transform:"translateX(-50%) rotate(-4deg)",background:"#fff",padding:"5px 5px 11px",boxShadow:"0 4px 9px rgba(0,0,0,0.22)",width:80}}>
                       {album.coverUrl
-                        ?<img src={album.coverUrl} style={{width:"100%",height:60,objectFit:"cover",display:"block"}} alt="cover"/>
-                        :<div style={{height:60,background:cover?cover.color:"#f0e6d2",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30}}>{cover?cover.emoji:album.emoji}</div>
+                        ?<img src={album.coverUrl} style={{width:"100%",height:54,objectFit:"cover",display:"block"}} alt="cover"/>
+                        :<div style={{height:54,background:cover?cover.color:"#f3ead9",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>{cover?cover.emoji:album.emoji}</div>
                       }
                     </div>
-                    <div style={{position:"absolute",bottom:11,left:6,right:6,fontFamily:"'Caveat',cursive",fontSize:15,fontWeight:700,color:theme.text,textAlign:"center",lineHeight:1.05,maxHeight:36,overflow:"hidden"}}>{album.name}</div>
+                    
                   </div>
                 </div>
               );
             })}
-            <div onClick={()=>onAddAlbum(shelf.id,newAlbum())} style={{width:128,height:172,border:"2px dashed rgba(150,120,80,0.4)",borderRadius:9,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,cursor:"pointer",color:"#a08a64",fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center"}} onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(150,120,80,0.7)";e.currentTarget.style.color="#7a6442";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(150,120,80,0.4)";e.currentTarget.style.color="#a08a64";}}><span style={{fontSize:30,lineHeight:1}}>+</span>Add New Book</div>
+            <div onClick={()=>onAddAlbum(shelf.id,newAlbum())} style={{width:128,height:172,border:"2px dashed rgba(150,120,80,0.4)",borderRadius:9,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,cursor:"pointer",color:"#a08a64",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.05em",textTransform:"uppercase",textAlign:"center"}} onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(150,120,80,0.7)";e.currentTarget.style.color="#7a6442";}} onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(150,120,80,0.4)";e.currentTarget.style.color="#a08a64";}}><span style={{fontSize:30,lineHeight:1}}>+</span>Add New Book</div>
           </div>
-          <div style={{height:18,borderRadius:"3px 3px 5px 5px",backgroundColor:"#8a6638",backgroundImage:"repeating-linear-gradient(90deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 2px,transparent 2px,transparent 24px),linear-gradient(to bottom,#b08851 0%,#8a6638 55%,#6f4f29 100%)",boxShadow:"0 14px 22px rgba(70,45,15,0.40)"}}><div style={{height:3,background:"rgba(255,245,225,0.35)"}}/></div>
+          <div style={{height:18,borderRadius:"3px 3px 5px 5px",backgroundColor:"#b07f44",backgroundImage:"repeating-linear-gradient(90deg,rgba(255,255,255,0.05) 0px,rgba(255,255,255,0.05) 2px,transparent 2px,transparent 24px),linear-gradient(to bottom,#cf9c5e 0%,#b07f44 55%,#8c5f30 100%)",boxShadow:"0 14px 22px rgba(90,55,18,0.34)"}}><div style={{height:3,background:"rgba(255,246,228,0.4)"}}/></div>
           <div style={{height:16,background:"linear-gradient(to bottom,rgba(80,55,25,0.35),transparent)"}}/>
         </div>
       ))}
-      <div onClick={onAddShelf} style={{marginTop:6,marginLeft:18,display:"inline-flex",alignItems:"center",gap:8,fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#a08a64",cursor:"pointer",position:"relative",zIndex:2}} onMouseEnter={e=>e.currentTarget.style.color="#7a6442"} onMouseLeave={e=>e.currentTarget.style.color="#a08a64"}><span style={{fontSize:20,lineHeight:1}}>+</span> New Shelf</div>
+      <div onClick={onAddShelf} style={{marginTop:6,marginLeft:18,display:"inline-flex",alignItems:"center",gap:8,fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#a08a64",cursor:"pointer",position:"relative",zIndex:2}} onMouseEnter={e=>e.currentTarget.style.color="#7a6442"} onMouseLeave={e=>e.currentTarget.style.color="#a08a64"}><span style={{fontSize:20,lineHeight:1}}>+</span> New Shelf</div>
     </div>
   );
 }
@@ -555,7 +555,7 @@ function PhotoBook({album,onClose,session}){
           <div key={c.id} style={{marginBottom:24,paddingBottom:20,borderBottom:"1px dashed #ddd"}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
               <span style={{fontFamily:"'Caveat',cursive",fontSize:20,fontWeight:700}}>{c.author}</span>
-              <span style={{fontFamily:"'Lato',sans-serif",fontSize:11,color:"#bbb"}}>{c.date}</span>
+              <span style={{fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#bbb"}}>{c.date}</span>
             </div>
             <div style={{fontFamily:"'Caveat',cursive",fontSize:18,color:"#555"}}>{c.text}</div>
           </div>
@@ -563,7 +563,7 @@ function PhotoBook({album,onClose,session}){
         <div style={{background:"rgba(200,169,110,0.08)",border:"1px dashed #c8a96e",borderRadius:4,padding:"18px 20px",marginTop:12}}>
           <input value={newAuthor} onChange={e=>setNewAuthor(e.target.value)} placeholder="Your name" style={{border:"none",borderBottom:"1.5px solid #bbb",background:"transparent",fontFamily:"'Caveat',cursive",fontSize:18,color:"#333",outline:"none",width:"100%",padding:"4px 0",marginBottom:12}}/>
           <textarea value={newComment} onChange={e=>setNewComment(e.target.value)} placeholder="Leave a message..." style={{border:"none",borderBottom:"1.5px solid #bbb",background:"transparent",fontFamily:"'Caveat',cursive",fontSize:18,color:"#333",outline:"none",width:"100%",padding:"4px 0",resize:"none",height:60,display:"block"}}/>
-          <button onClick={submitComment} style={{marginTop:12,background:"#2c2c2c",color:"#f5f0e8",border:"none",borderRadius:20,padding:"8px 22px",fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer"}}>Sign it ✍️</button>
+          <button onClick={submitComment} style={{marginTop:12,background:"#2c2c2c",color:"#f5f0e8",border:"none",borderRadius:20,padding:"8px 22px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer"}}>Sign it ✍️</button>
         </div>
       </div>
     );
@@ -612,12 +612,12 @@ function PhotoBook({album,onClose,session}){
         <div style={{background:"#2c2c2c",color:"#f5f0e8",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"3px solid #c8a96e",flexShrink:0}}>
           <div>
             <div style={{fontFamily:"'Caveat',cursive",fontSize:24}}>{album.name}</div>
-            <div style={{fontFamily:"'Lato',sans-serif",fontSize:10,color:"#999",letterSpacing:"0.1em",textTransform:"uppercase"}}>{isBackPage(page)?"Guest Book":`Page ${page+1} of ${totalPages-1}`}</div>
+            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:10,color:"#999",letterSpacing:"0.1em",textTransform:"uppercase"}}>{isBackPage(page)?"Guest Book":`Page ${page+1} of ${totalPages-1}`}</div>
           </div>
           <div style={{display:"flex",gap:8}}>
             {!isBackPage(page)&&<>
-              <button onClick={()=>{setFilmLifted(f=>!f);if(filmLifted)setShowStickers(false);}} style={{background:filmLifted?"#c8a96e":"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",color:filmLifted?"#1a1a1a":"#f5f0e8",borderRadius:20,padding:"4px 12px",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>{filmLifted?"📌 Film on":"🖐 Lift film"}</button>
-              <label style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",color:"#f5f0e8",borderRadius:20,padding:"4px 12px",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:uploadingBook?"default":"pointer",opacity:uploadingBook?0.6:1,display:"inline-flex",alignItems:"center"}}>{uploadingBook?"⏳":"📷 Add photo"}<input type="file" accept="image/*" style={{display:"none"}} onChange={e=>addPhotoToBook(e.target.files[0])} disabled={uploadingBook}/></label>{filmLifted&&<button onClick={()=>setShowStickers(s=>!s)} style={{background:showStickers?"#e9c46a":"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",color:showStickers?"#1a1a1a":"#f5f0e8",borderRadius:20,padding:"4px 12px",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>⭐</button>}
+              <button onClick={()=>{setFilmLifted(f=>!f);if(filmLifted)setShowStickers(false);}} style={{background:filmLifted?"#c8a96e":"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",color:filmLifted?"#1a1a1a":"#f5f0e8",borderRadius:20,padding:"4px 12px",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>{filmLifted?"📌 Film on":"🖐 Lift film"}</button>
+              <label style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",color:"#f5f0e8",borderRadius:20,padding:"4px 12px",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:uploadingBook?"default":"pointer",opacity:uploadingBook?0.6:1,display:"inline-flex",alignItems:"center"}}>{uploadingBook?"⏳":"📷 Add photo"}<input type="file" accept="image/*" style={{display:"none"}} onChange={e=>addPhotoToBook(e.target.files[0])} disabled={uploadingBook}/></label>{filmLifted&&<button onClick={()=>setShowStickers(s=>!s)} style={{background:showStickers?"#e9c46a":"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",color:showStickers?"#1a1a1a":"#f5f0e8",borderRadius:20,padding:"4px 12px",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>⭐</button>}
             </>}
             <button onClick={()=>{saveBookData(positions,stickersByPage);onClose();}} style={{background:"none",border:"1px solid rgba(255,255,255,0.2)",color:"#aaa",borderRadius:"50%",width:30,height:30,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
           </div>
@@ -706,21 +706,21 @@ function SharedWallView({items:initialItems,label}){
   const sorted=[...visible].sort((a,b)=>(a.zIndex||1)-(b.zIndex||1));
 
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'Georgia',serif"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}`}</style>
+    <div style={{display:"flex",flexDirection:"column",height:"100vh",fontFamily:"'Nunito',sans-serif"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}`}</style>
       <div style={{background:"#ffffff",borderBottom:"1px solid #e8e2d8",padding:"0 24px",display:"flex",alignItems:"center",justifyContent:"space-between",height:58,flexShrink:0,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontSize:26,lineHeight:1}}>📌</span>
-          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:26,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
+          <span style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:26,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
         </div>
-        <div style={{fontFamily:"'Lato',sans-serif",fontSize:13,color:"#888",display:"flex",alignItems:"center",gap:8}}>
+        <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#888",display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontSize:16}}>👀</span> You're viewing <strong style={{color:"#2a2118"}}>{label}</strong> — read only
         </div>
-        <a href="/" style={{background:"#1a1a1a",color:"#fff",borderRadius:20,padding:"6px 14px",fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,textDecoration:"none"}}>{"Create your own →"}</a>
+        <a href="/" style={{background:"#1a1a1a",color:"#fff",borderRadius:20,padding:"6px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,textDecoration:"none"}}>{"Create your own →"}</a>
       </div>
-      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={()=>{if(didDrag.current){didDrag.current=false;}}} style={{flex:1,position:"relative",overflow:"hidden",cursor:"grab",background:"#d4956a",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75 0.35' numOctaves='5' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.4'/%3E%3C/filter%3E%3Crect width='400' height='400' fill='%23e0a878' opacity='1'/%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.28' style='mix-blend-mode:multiply'/%3E%3C/svg%3E"),repeating-linear-gradient(92deg,rgba(220,170,100,0.07) 0px,rgba(220,170,100,0.07) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(2deg,rgba(140,80,30,0.05) 0px,rgba(140,80,30,0.05) 1px,transparent 1px,transparent 22px)`,backgroundSize:"400px 400px,400px 400px,400px 400px",userSelect:"none"}}>
-        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 80px rgba(60,30,5,0.20)",background:"radial-gradient(ellipse at 50% 0%,rgba(255,220,160,0.15) 0%,transparent 55%)",pointerEvents:"none",zIndex:5}}/>
-        {loading&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:10}}><div style={{background:"rgba(255,255,255,0.9)",borderRadius:12,padding:"20px 32px",fontFamily:"'Lato',sans-serif",fontSize:14,color:"#666"}}>Loading wall...</div></div>}
+      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={()=>{if(didDrag.current){didDrag.current=false;}}} style={{flex:1,position:"relative",overflow:"hidden",cursor:"grab",background:"#ddb074",backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75 0.35' numOctaves='5' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.4'/%3E%3C/filter%3E%3Crect width='400' height='400' fill='%23e3b87e' opacity='1'/%3E%3Crect width='400' height='400' filter='url(%23f)' opacity='0.28' style='mix-blend-mode:multiply'/%3E%3C/svg%3E"),repeating-linear-gradient(92deg,rgba(220,170,100,0.07) 0px,rgba(220,170,100,0.07) 1px,transparent 1px,transparent 18px),repeating-linear-gradient(2deg,rgba(140,80,30,0.05) 0px,rgba(140,80,30,0.05) 1px,transparent 1px,transparent 22px)`,backgroundSize:"400px 400px,400px 400px,400px 400px",userSelect:"none"}}>
+        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 70px rgba(110,65,20,0.22)",background:"radial-gradient(ellipse at 50% 0%,rgba(255,220,160,0.15) 0%,transparent 55%)",pointerEvents:"none",zIndex:5}}/>
+        {loading&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:10}}><div style={{background:"rgba(255,255,255,0.9)",borderRadius:12,padding:"20px 32px",fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#666"}}>Loading wall...</div></div>}
         <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`}}>
           {sorted.map(item=>{
             const pinColor=PIN_COLORS[(item.id||0)%PIN_COLORS.length];
@@ -752,12 +752,12 @@ function SharedWallView({items:initialItems,label}){
             return null;
           })}
         </div>
-        <div style={{position:"absolute",left:16,bottom:14,zIndex:60,fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.04em",color:"rgba(255,255,255,0.55)",pointerEvents:"none"}}>drag to pan · scroll to zoom</div>
+        <div style={{position:"absolute",left:16,bottom:14,zIndex:60,fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.04em",color:"rgba(255,255,255,0.55)",pointerEvents:"none"}}>drag to pan · scroll to zoom</div>
         <div style={{position:"absolute",right:16,bottom:16,zIndex:60,display:"flex",alignItems:"center",gap:6}}>
           <button onClick={()=>zoomBy(1/1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>−</button>
-          <div style={{minWidth:52,textAlign:"center",background:"rgba(44,38,32,0.85)",color:"#fff",borderRadius:9,padding:"7px 8px",fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700}}>{Math.round(zoom*100)}%</div>
+          <div style={{minWidth:52,textAlign:"center",background:"rgba(44,38,32,0.85)",color:"#fff",borderRadius:9,padding:"7px 8px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700}}>{Math.round(zoom*100)}%</div>
           <button onClick={()=>zoomBy(1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>+</button>
-          <button onClick={resetView} style={{height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:11,fontWeight:700,fontFamily:"'Lato',sans-serif",cursor:"pointer",padding:"0 12px"}}>Reset</button>
+          <button onClick={resetView} style={{height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:11,fontWeight:700,fontFamily:"'Nunito',sans-serif",cursor:"pointer",padding:"0 12px"}}>Reset</button>
         </div>
       </div>
       {viewPhoto&&<div onClick={()=>setViewPhoto(null)} style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,0.96)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
@@ -847,24 +847,24 @@ export default function Pinwall(){
   if(!session) return <Auth/>;
 
   return(
-    <div style={{fontFamily:"'Georgia',serif",background:"#1a1a1a",minHeight:"100vh"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:46px!important;padding:0 12px!important}.pinwall-nav .logo-text{font-size:20px!important}.pinwall-nav .nav-btn{font-size:11px!important;padding:4px 10px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}}`}</style>
+    <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:46px!important;padding:0 12px!important}.pinwall-nav .logo-text{font-size:20px!important}.pinwall-nav .nav-btn{font-size:11px!important;padding:4px 10px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}}`}</style>
       <div className="pinwall-nav" style={{background:"#ffffff",borderBottom:"1px solid #e8e2d8",padding:"0 24px",display:"flex",alignItems:"center",justifyContent:"space-between",height:58,position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontSize:26,lineHeight:1}}>📌</span>
-          <span style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:26,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
+          <span style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:26,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
           {[["wall","📌 My Wall"],["shelf","📚 Library"]].map(([v,label])=>(
-            <button key={v} onClick={()=>{setView(v);if(v==='wall'&&openAlbum)setOpenAlbum(null);}} style={{background:"none",color:view===v?"#1a1a1a":"#888",border:"none",borderRadius:20,padding:"6px 18px",fontFamily:"'Lato',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",transition:"color 0.15s",borderBottom:view===v?"2px solid #1a1a1a":"2px solid transparent"}}>{label}</button>
+            <button key={v} onClick={()=>{setView(v);if(v==='wall'&&openAlbum)setOpenAlbum(null);}} style={{background:"none",color:view===v?"#1a1a1a":"#888",border:"none",borderRadius:20,padding:"6px 18px",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",transition:"color 0.15s",borderBottom:view===v?"2px solid #1a1a1a":"2px solid transparent"}}>{label}</button>
           ))}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <button onClick={copyShareLink} style={{display:"inline-flex",alignItems:"center",gap:6,background:shareCopied?"#2a9d8f":"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"6px 14px",fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer",transition:"background 0.2s"}}>
+          <button onClick={copyShareLink} style={{display:"inline-flex",alignItems:"center",gap:6,background:shareCopied?"#2a9d8f":"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"6px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer",transition:"background 0.2s"}}>
             {shareCopied?"✓ Link copied!":"🔗 Share wall"}
           </button>
-          <button onClick={()=>supabase.auth.signOut()} style={{background:"none",border:"1px solid #ddd",borderRadius:20,padding:"5px 14px",fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer",color:"#888"}}>Sign out</button>
-          <div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Lato',sans-serif",fontWeight:700,fontSize:14,boxShadow:"0 2px 6px rgba(180,40,30,0.3)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
+          <button onClick={()=>supabase.auth.signOut()} style={{background:"none",border:"1px solid #ddd",borderRadius:20,padding:"5px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer",color:"#888"}}>Sign out</button>
+          <div style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:14,boxShadow:"0 2px 6px rgba(180,40,30,0.3)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
         </div>  
       </div>
       {view==="wall"&&<HorizontalWall session={session}/>}
