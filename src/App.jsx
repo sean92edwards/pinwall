@@ -394,8 +394,8 @@ function HorizontalWall({session}){
           <button onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} className="tb-btn edit-wall-desktop" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,background:editing?"#2a9d8f":"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
         </div>
       </div>
-      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",backgroundColor:"#b8834a",backgroundImage:'url("/cork.svg")',backgroundSize:"800px 800px",userSelect:"none"}}>
-        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 100px rgba(50,25,5,0.30)",pointerEvents:"none",zIndex:5}}/>
+      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",backgroundColor:"#b8834a",backgroundImage:'url("/cork.jpg")',backgroundSize:"600px 600px",userSelect:"none"}}>
+        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 100px rgba(50,25,5,0.25)",pointerEvents:"none",zIndex:5}}/>
         <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`}}>
           {sorted.map(item=>{
             const isSel=editing&&selected===item.id;
@@ -812,8 +812,8 @@ function SharedWallView({items:initialItems,label}){
         </div>
         <a href="/" style={{background:"#1a1a1a",color:"#fff",borderRadius:20,padding:"6px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,textDecoration:"none"}}>{"Create your own →"}</a>
       </div>
-      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={()=>{if(didDrag.current){didDrag.current=false;}}} style={{flex:1,position:"relative",overflow:"hidden",cursor:"grab",backgroundColor:"#b8834a",backgroundImage:'url("/cork.svg")',backgroundSize:"800px 800px",userSelect:"none"}}>
-        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 100px rgba(50,25,5,0.30)",pointerEvents:"none",zIndex:5}}/>
+      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={()=>{if(didDrag.current){didDrag.current=false;}}} style={{flex:1,position:"relative",overflow:"hidden",cursor:"grab",backgroundColor:"#b8834a",backgroundImage:'url("/cork.jpg")',backgroundSize:"600px 600px",userSelect:"none"}}>
+        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 100px rgba(50,25,5,0.25)",pointerEvents:"none",zIndex:5}}/>
         {loading&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:10}}><div style={{background:"rgba(255,255,255,0.9)",borderRadius:12,padding:"20px 32px",fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#666"}}>Loading wall...</div></div>}
         <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`}}>
           {sorted.map(item=>{
