@@ -140,7 +140,7 @@ function HorizontalWall({session}){
     const onKey=e=>{
       if(!editing||!selected)return;
       if(e.key==='Delete'||e.key==='Backspace'){
-        if(editingText)return;
+        if(editingText||editingCaption)return;
         setItems(p=>p.filter(i=>i.id!==selected));
         setSelected(null);
       }
