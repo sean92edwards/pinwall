@@ -71,6 +71,7 @@ function HorizontalWall({session}){
   const [editing,setEditing]=useState(false);
   const [selected,setSelected]=useState(null);
   const [editingText,setEditingText]=useState(null);
+  const [editingCaption,setEditingCaption]=useState(null);
   const [maxZ,setMaxZ]=useState(20);
   const [showStickers,setShowStickers]=useState(false);
   const [showNoteMenu,setShowNoteMenu]=useState(false);
@@ -469,7 +470,12 @@ function HorizontalWall({session}){
               <div style={{position:"absolute",top:-14,left:"50%",transform:"translateX(-50%)",width:22,height:22,borderRadius:"50%",background:`radial-gradient(circle at 35% 35%,${pinColor}ee,${pinColor})`,boxShadow:"0 3px 10px rgba(0,0,0,0.45),inset 0 1px 2px rgba(255,255,255,0.4)",zIndex:2}}/>
               <div style={{background:"white",padding:isPhoto?"5px 5px 30px 5px":"8px 8px 36px 8px",boxShadow:isSel?"0 14px 34px rgba(0,0,0,0.30),0 0 0 2px rgba(74,144,226,0.55)":"0 8px 20px rgba(0,0,0,0.25),0 2px 4px rgba(0,0,0,0.10)",width:item.w||148,transition:"box-shadow 0.15s"}}>
                 {isPhoto?<img src={item.url} style={{width:"100%",height:item.h||148,objectFit:"cover",display:"block"}} alt=""/>:<div style={{width:"100%",height:item.h||148,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.min(item.w||148,item.h||148)*0.4}}>{item.emoji}</div>}
-                {lod==='full'&&<div style={{marginTop:6,fontFamily:"'Caveat',cursive",fontSize:15,color:"#555",textAlign:"center",lineHeight:1.2}}>{item.caption||""}</div>}
+                {lod==='full'&&<div onDoubleClick={e=>{if(editing){e.stopPropagation();setEditingCaption(item.id);}}} style={{marginTop:6,fontFamily:"'Permanent Marker',cursive",fontSize:13,color:"#1a1a1a",textAlign:"center",lineHeight:1.3,minHeight:16,cursor:editing?"text":"default"}}>
+                  {editingCaption===item.id
+                    ?<input autoFocus defaultValue={item.caption||""} onBlur={e=>{setItems(p=>p.map(i=>i.id===item.id?{...i,caption:e.target.value}:i));setEditingCaption(null);}} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();if(e.key==='Escape')setEditingCaption(null);}} onClick={e=>e.stopPropagation()} style={{background:"transparent",border:"none",borderBottom:"1px solid #ccc",outline:"none",fontFamily:"'Permanent Marker',cursive",fontSize:13,color:"#1a1a1a",textAlign:"center",width:"100%",padding:0}}/>
+                    :(item.caption||<span style={{color:"#ccc",fontSize:10,fontFamily:"'Nunito',sans-serif"}}>{editing?"double-click to write":""}</span>)
+                  }
+                </div>}
               </div>
               {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div>{item.type==='photo'&&item.url&&<div onClick={e=>{e.stopPropagation();cutOutPhoto(item);}} style={{position:"absolute",top:-10,left:-10,height:20,borderRadius:10,background:cuttingOut?"#888":"#2a9d8f",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",cursor:cuttingOut?"default":"pointer",zIndex:10,padding:"0 8px",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>{cuttingOut?"⏳":"✂️ Cut"}</div>}<div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
             </div>);}
@@ -1103,7 +1109,7 @@ export default function Pinwall(){
 
   return(
     <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:44px!important;padding:0 10px!important}.pinwall-nav .logo-text{font-size:18px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:11px!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.edit-wall-desktop{display:none!important}.edit-wall-mobile{display:inline-flex!important}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:44px!important;padding:0 10px!important}.pinwall-nav .logo-text{font-size:18px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:11px!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.edit-wall-desktop{display:none!important}.edit-wall-mobile{display:inline-flex!important}}`}</style>
       <div className="pinwall-nav" style={{background:"#ffffff",borderBottom:"1px solid #e8e2d8",padding:"0 24px",display:"flex",alignItems:"center",justifyContent:"space-between",height:58,position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontSize:22,lineHeight:1}}>📌</span>
