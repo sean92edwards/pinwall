@@ -325,7 +325,7 @@ function HorizontalWall({session}){
         const maxDim=200;const ratio=img.width/img.height;
         const w=Math.max(100,ratio>=1?maxDim:maxDim*ratio);
         const h=Math.max(100,ratio>=1?maxDim/ratio:maxDim);
-        setItems(p=>[{id:Date.now(),type:'photo',url:publicUrl,cx:item.cx+120,cy:item.cy,rot:0,w,h,zIndex:maxZ+1},...p]);
+        setItems(p=>[{id:Date.now(),type:'cutout',url:publicUrl,cx:item.cx+120,cy:item.cy,rot:0,w,h,zIndex:maxZ+1},...p]);
         setMaxZ(z=>z+1);setCuttingOut(false);
       };
       img.onerror=()=>{URL.revokeObjectURL(objectUrl);setCuttingOut(false);};
@@ -485,6 +485,10 @@ function HorizontalWall({session}){
                 <path d={item.path} fill="none" stroke={item.color||"#e63946"} strokeWidth={(item.strokeWidth||3)*1.8} strokeLinecap="round" strokeLinejoin="round" filter={`url(#crayon-${item.id})`} opacity="0.6"/>
                 <path d={item.path} fill="none" stroke={item.color||"#e63946"} strokeWidth={(item.strokeWidth||3)*0.7} strokeLinecap="round" strokeLinejoin="round" filter={`url(#crayon-${item.id})`} opacity="0.9"/>
               </svg>
+              {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div><div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
+            </div>);}
+            if(item.type==='cutout'){return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"default",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}}} onMouseEnter={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${(item.rot||0)*0.3}deg) scale(1.06)`;e.currentTarget.style.zIndex=99;}}} onMouseLeave={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(1)`;e.currentTarget.style.zIndex=item.zIndex;}}}>
+              <img src={item.url} style={{width:item.w||160,height:item.h||160,objectFit:"contain",display:"block",filter:"drop-shadow(2px 4px 8px rgba(0,0,0,0.3))"}} alt=""/>
               {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div><div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
             </div>);}
             return null;
