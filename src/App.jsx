@@ -113,7 +113,11 @@ function HorizontalWall({session}){
       const{data,error}=await supabase.from('walls').select('items').eq('user_id',session.user.id).maybeSingle();
       if(error)console.error('[Wall load] error:',error);
       console.log('[Wall load] data:',data);
-      if(data?.items?.length)setItems(data.items);
+      if(data?.items?.length){
+        setItems(data.items);
+        const loadedMaxZ=Math.max(...data.items.map(i=>i.zIndex||1),20);
+        setMaxZ(loadedMaxZ);
+      }
       hasLoaded.current=true;
     };
     loadWall();
@@ -306,10 +310,8 @@ function HorizontalWall({session}){
     if(!item.url||!session?.user||cuttingOut)return;
     setCuttingOut(true);
     try{
-      // Fetch the image and run background removal
-      const response=await fetch(item.url);
-      const blob=await response.blob();
-      const resultBlob=await removeBackground(blob,{output:{format:'image/png'}});
+      // Pass URL directly to removeBackground — it handles fetching internally
+      const resultBlob=await removeBackground(item.url,{output:{format:'image/png'}});
       // Upload the cutout to Supabase storage
       const fileName=`${session.user.id}/cutouts/${Date.now()}.png`;
       const{error}=await supabase.storage.from('photos').upload(fileName,resultBlob,{contentType:'image/png'});
