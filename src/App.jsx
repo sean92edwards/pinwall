@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
 import Auth from "./Auth";
+import { removeBackground } from "@imgly/background-removal";
 
 const STICKERS = ["⭐","❤️","🌟","✨","🎉","🌈","🌸","🦋","🍀","🎨","🔥","💫","🌺","🦄","🍭","🌙","☀️","🎀","🐚","🍂","🦊","🐝","🍓","🎠","🌊","🪄","🏆","🎯","🎪","🎭","😂","😍","🥳","😭","🤩","😎","🥰","😅","🙌","👏"];
 
@@ -74,6 +75,7 @@ function HorizontalWall({session}){
   const [showStickers,setShowStickers]=useState(false);
   const [showNoteMenu,setShowNoteMenu]=useState(false);
   const [uploading,setUploading]=useState(false);
+  const [cuttingOut,setCuttingOut]=useState(false);
   const [viewPhoto,setViewPhoto]=useState(null);
   const [doodling,setDoodling]=useState(false);
   const [doodleColor,setDoodleColor]=useState("#e63946");
@@ -299,6 +301,38 @@ function HorizontalWall({session}){
   const addSticker=emoji=>{const c=centerWorld();setItems(p=>[{id:Date.now(),type:'sticker',emoji,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*30,size:50,zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setShowStickers(false);};
   const addBubble=()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'bubble',text:"",cx:c.x+(Math.random()-0.5)*80,cy:c.y+(Math.random()-0.5)*80,rot:(Math.random()-0.5)*8,color:"#fff9c4",zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setEditing(true);setSelected(id);setEditingText(id);};
   const addSpeechBubble=()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'speech',text:"",cx:c.x+(Math.random()-0.5)*80,cy:c.y+(Math.random()-0.5)*80,rot:0,color:"#ffffff",tailDir:"bottom",zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setEditing(true);setSelected(id);setEditingText(id);};
+
+  const cutOutPhoto=async(item)=>{
+    if(!item.url||!session?.user||cuttingOut)return;
+    setCuttingOut(true);
+    try{
+      // Fetch the image and run background removal
+      const response=await fetch(item.url);
+      const blob=await response.blob();
+      const resultBlob=await removeBackground(blob,{output:{format:'image/png'}});
+      // Upload the cutout to Supabase storage
+      const fileName=`${session.user.id}/cutouts/${Date.now()}.png`;
+      const{error}=await supabase.storage.from('photos').upload(fileName,resultBlob,{contentType:'image/png'});
+      if(error){console.error('Cutout upload error:',error);setCuttingOut(false);return;}
+      const{data:{publicUrl}}=supabase.storage.from('photos').getPublicUrl(fileName);
+      // Add as a new item on the wall near the original photo
+      const img=new Image();
+      const objectUrl=URL.createObjectURL(resultBlob);
+      img.onload=()=>{
+        URL.revokeObjectURL(objectUrl);
+        const maxDim=160;const ratio=img.width/img.height;
+        const w=ratio>=1?maxDim:maxDim*ratio;const h=ratio>=1?maxDim/ratio:maxDim;
+        setItems(p=>[{id:Date.now(),type:'photo',url:publicUrl,cx:item.cx+80,cy:item.cy+80,rot:(Math.random()-0.5)*10,w,h,zIndex:maxZ+1},...p]);
+        setMaxZ(z=>z+1);setCuttingOut(false);
+      };
+      img.onerror=()=>{URL.revokeObjectURL(objectUrl);setCuttingOut(false);};
+      img.src=objectUrl;
+    }catch(e){
+      console.error('Cutout error:',e);
+      setCuttingOut(false);
+      alert('Could not remove background. Try a different photo.');
+    }
+  };
   const addPhoto=async(file)=>{
     if(!file)return;
     const ALLOWED_TYPES=['image/jpeg','image/png','image/gif','image/webp','image/avif'];
@@ -434,7 +468,7 @@ function HorizontalWall({session}){
                 {isPhoto?<img src={item.url} style={{width:"100%",height:item.h||148,objectFit:"cover",display:"block"}} alt=""/>:<div style={{width:"100%",height:item.h||148,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.min(item.w||148,item.h||148)*0.4}}>{item.emoji}</div>}
                 {lod==='full'&&<div style={{marginTop:6,fontFamily:"'Caveat',cursive",fontSize:15,color:"#555",textAlign:"center",lineHeight:1.2}}>{item.caption||""}</div>}
               </div>
-              {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div><div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
+              {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div>{item.type==='photo'&&item.url&&<div onClick={e=>{e.stopPropagation();cutOutPhoto(item);}} style={{position:"absolute",top:-10,left:-10,height:20,borderRadius:10,background:cuttingOut?"#888":"#2a9d8f",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",cursor:cuttingOut?"default":"pointer",zIndex:10,padding:"0 8px",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>{cuttingOut?"⏳":"✂️ Cut"}</div>}<div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
             </div>);}
             if(item.type==='doodle'){return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"default",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}}}>
               <svg width={item.w} height={item.h} viewBox={`0 0 ${item.w} ${item.h}`} style={{overflow:"visible",display:"block"}}>
