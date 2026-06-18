@@ -79,6 +79,7 @@ function HorizontalWall({session}){
   const [cuttingOut,setCuttingOut]=useState(false);
   const [viewPhoto,setViewPhoto]=useState(null);
   const [doodling,setDoodling]=useState(false);
+  const [erasing,setErasing]=useState(false);
   const [doodleColor,setDoodleColor]=useState("#1a1a1a");
   const [doodleWidth,setDoodleWidth]=useState(3);
   const [currentPath,setCurrentPath]=useState(null);
@@ -86,9 +87,11 @@ function HorizontalWall({session}){
   const doodleColorRef=useRef(doodleColor);
   const doodleWidthRef=useRef(doodleWidth);
   const doodlingRef=useRef(false);
+  const erasingRef=useRef(false);
   useEffect(()=>{doodleColorRef.current=doodleColor;},[doodleColor]);
   useEffect(()=>{doodleWidthRef.current=doodleWidth;},[doodleWidth]);
   useEffect(()=>{doodlingRef.current=doodling;},[doodling]);
+  useEffect(()=>{erasingRef.current=erasing;},[erasing]);
   const [view,setView]=useState({x:80,y:80,zoom:1});
   const [vp,setVp]=useState({w:1200,h:700});
   const dragStart=useRef(null);
@@ -258,7 +261,7 @@ function HorizontalWall({session}){
     if(tag==='BUTTON'||tag==='INPUT'||tag==='TEXTAREA'||tag==='LABEL'||tag==='A'||e.target.closest('button,input,textarea,label,a,[data-control]'))return;
     // If an item handler already claimed this touch (rotate/resize/drag), skip
     if(dragStart.current)return;
-    if(doodlingRef.current&&e.touches.length===1){
+    if(doodlingRef.current&&!erasingRef.current&&e.touches.length===1){
       // Start doodle on touch
       const t=e.touches[0];
       const r=rectOf();const v=viewRef.current;
@@ -371,8 +374,7 @@ function HorizontalWall({session}){
   const onViewportMouseDown=e=>{
     mousedownOnItem.current=false;
     if(e.button!==0)return;
-    if(doodlingRef.current){
-      const r=rectOf();const v=viewRef.current;
+    if(doodlingRef.current&&!erasingRef.current){const r=rectOf();const v=viewRef.current;
       const wx=(e.clientX-(r?.left||0)-v.x)/v.zoom;
       const wy=(e.clientY-(r?.top||0)-v.y)/v.zoom;
       doodlePoints.current=[{x:wx,y:wy}];
@@ -426,7 +428,7 @@ function HorizontalWall({session}){
             </div>}
           </div>
           <div style={{width:1,height:20,background:"#d8cdb8"}}/>
-          <button onClick={()=>{setDoodling(d=>!d);if(doodling)setCurrentPath(null);}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:doodling?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>{if(!doodling)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!doodling)e.currentTarget.style.background="transparent";}}><span style={{fontSize:15}}>✏️</span>Doodle</button>
+          <button onClick={()=>{setDoodling(d=>!d);if(doodling){setCurrentPath(null);setErasing(false);}}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:doodling?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>{if(!doodling)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!doodling)e.currentTarget.style.background="transparent";}}><span style={{fontSize:15}}>✏️</span>Doodle</button>
         </div>
         {doodling&&<div style={{position:"absolute",left:"50%",transform:"translateX(-50%)",top:52,display:"flex",gap:6,alignItems:"center",background:"rgba(0,0,0,0.8)",borderRadius:20,padding:"6px 12px",zIndex:200}}>
           {["#1a1a1a","#e63980","#e63946","#2a9d8f","#e9c46a","#457b9d","#ffffff"].map(c=><div key={c} onClick={()=>setDoodleColor(c)} style={{width:20,height:20,borderRadius:"50%",background:c,border:doodleColor===c?"2px solid #4a90e2":"2px solid rgba(255,255,255,0.3)",cursor:"pointer"}}/>)}
@@ -436,6 +438,8 @@ function HorizontalWall({session}){
           <button onClick={()=>{const last=items.find(i=>i.type==='doodle');if(last)setItems(p=>p.filter(i=>i.id!==last.id));}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Undo</button>
           <button onClick={()=>setItems(p=>p.filter(i=>i.type!=='doodle'&&i.type!=='markertext'))} style={{background:"#e63946",border:"none",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Clear all</button>
           <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
+          <button onClick={()=>setErasing(e=>!e)} style={{background:erasing?"#fff":"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"3px 10px",color:erasing?"#1a1a1a":"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>🧹 Eraser</button>
+          <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
           <button onClick={()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'markertext',text:"",cx:c.x,cy:c.y,rot:0,color:doodleColorRef.current,scale:1,zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setDoodling(false);setEditing(true);setSelected(id);setEditingText(id);}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Permanent Marker',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Aa Text</button>
         </div>}
         <div style={{position:"absolute",right:18,top:"50%",transform:"translateY(-50%)",display:"flex",gap:10,alignItems:"center",className:"edit-btn-desktop"}}>
@@ -444,7 +448,7 @@ function HorizontalWall({session}){
       </div>
       <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",background:"#c6a06a",backgroundImage:`radial-gradient(ellipse 120% 90% at 50% -5%,rgba(255,244,222,0.35) 0%,transparent 55%),radial-gradient(ellipse at 88% 108%,rgba(110,78,42,0.32) 0%,transparent 50%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='cork'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23cork)' opacity='0.4'/%3E%3C/svg%3E")`,backgroundSize:"100% 100%,100% 100%,150px 150px",userSelect:"none"}}>
         <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 90px rgba(0,0,0,0.22)",pointerEvents:"none",zIndex:5}}/>
-        <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,pointerEvents:doodling?"none":"auto"}}>
+        <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,pointerEvents:(doodling&&!erasing)?"none":"auto"}}>
           {sorted.map(item=>{
             const isSel=editing&&selected===item.id;
             if(lod==='low'){
@@ -481,7 +485,7 @@ function HorizontalWall({session}){
               </div>
               {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div>{item.type==='photo'&&item.url&&<div onClick={e=>{e.stopPropagation();cutOutPhoto(item);}} style={{position:"absolute",top:-10,left:-10,height:20,borderRadius:10,background:cuttingOut?"#888":"#2a9d8f",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",cursor:cuttingOut?"default":"pointer",zIndex:10,padding:"0 8px",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>{cuttingOut?"⏳":"✂️ Cut"}</div>}<div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
             </div>);}
-            if(item.type==='doodle'){return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"default",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}}}>
+            if(item.type==='doodle'){return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:erasing?"crosshair":(editing?"grab":"default"),userSelect:"none"}} onMouseDown={e=>{if(!erasing)startDrag(e,item.id);}} onTouchStart={e=>{if(!erasing)startDrag(e,item.id);}} onClick={e=>{e.stopPropagation();if(erasing){setItems(p=>p.filter(i=>i.id!==item.id));}else if(editing){setSelected(item.id);}}}>
               <svg width={item.w} height={item.h} viewBox={`0 0 ${item.w} ${item.h}`} style={{overflow:"visible",display:"block"}}>
                 <path d={item.path} fill="none" stroke={item.color||"#e63946"} strokeWidth={(item.strokeWidth||3)*1.5} strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
               </svg>
@@ -895,10 +899,10 @@ function SharedWallView({items:initialItems,label}){
               </div>
             );
             if(item.type==='bubble')return(
-              <div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(${item.scale||1})`,userSelect:"none",minWidth:120,maxWidth:260,pointerEvents:"none"}}>
-                <div style={{background:item.color||"#fff9c4",borderRadius:3,padding:"14px 16px 18px",boxShadow:"2px 4px 14px rgba(0,0,0,0.22),inset 0 -3px 6px rgba(0,0,0,0.07)",minWidth:120,position:"relative"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:4,background:"rgba(0,0,0,0.06)",borderRadius:"3px 3px 0 0"}}/>
-                  <div style={{fontFamily:"'Caveat',cursive",fontSize:20,color:"#333",lineHeight:1.4,whiteSpace:"pre-wrap",wordBreak:"break-word",minWidth:80,minHeight:28}}>{item.text||""}</div>
+              <div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(${item.scale||1})`,userSelect:"none",pointerEvents:"none"}}>
+                <div style={{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",width:18,height:18,borderRadius:"50%",background:"radial-gradient(circle at 35% 35%,#f0d060,#b8941e)",boxShadow:"0 2px 6px rgba(0,0,0,0.35)",zIndex:2}}/>
+                <div style={{background:item.color||"#ffb6c8",padding:"18px 20px",minWidth:140,minHeight:80,boxShadow:"3px 5px 14px rgba(0,0,0,0.2)",position:"relative"}}>
+                  <div style={{fontFamily:"'Permanent Marker',cursive",fontSize:18,color:"#1a1a1a",lineHeight:1.5,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{item.text||""}</div>
                 </div>
               </div>
             );
@@ -910,8 +914,33 @@ function SharedWallView({items:initialItems,label}){
                 <div style={{position:"absolute",top:-14,left:"50%",transform:"translateX(-50%)",width:22,height:22,borderRadius:"50%",background:`radial-gradient(circle at 35% 35%,${pinColor}ee,${pinColor})`,boxShadow:"0 3px 10px rgba(0,0,0,0.45),inset 0 1px 2px rgba(255,255,255,0.4)",zIndex:2}}/>
                 <div style={{background:"white",padding:item.type==='photo'?"5px 5px 30px 5px":"8px 8px 36px 8px",boxShadow:"0 8px 20px rgba(0,0,0,0.25)",width:item.w||148}}>
                   {item.type==='photo'?<img src={item.url} style={{width:"100%",height:item.h||148,objectFit:"cover",display:"block"}} alt=""/>:<div style={{width:"100%",height:item.h||148,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.min(item.w||148,item.h||148)*0.4}}>{item.emoji}</div>}
-                  {zoom>=0.55&&<div style={{marginTop:6,fontFamily:"'Caveat',cursive",fontSize:15,color:"#555",textAlign:"center",lineHeight:1.2}}>{item.caption||""}</div>}
+                  {zoom>=0.55&&<div style={{marginTop:6,fontFamily:"'Permanent Marker',cursive",fontSize:13,color:"#1a1a1a",textAlign:"center",lineHeight:1.2}}>{item.caption||""}</div>}
                 </div>
+              </div>
+            );
+            if(item.type==='doodle')return(
+              <div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,pointerEvents:"none"}}>
+                <svg width={item.w} height={item.h} viewBox={`0 0 ${item.w} ${item.h}`} style={{overflow:"visible",display:"block"}}>
+                  <path d={item.path} fill="none" stroke={item.color||"#1a1a1a"} strokeWidth={(item.strokeWidth||3)*1.5} strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+                </svg>
+              </div>
+            );
+            if(item.type==='speech')return(
+              <div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(${item.scale||1})`,pointerEvents:"none",minWidth:100,maxWidth:240}}>
+                <div style={{background:item.color||"#fff",borderRadius:18,padding:"12px 16px",boxShadow:"2px 4px 14px rgba(0,0,0,0.18)",position:"relative",minWidth:100}}>
+                  <div style={{fontFamily:"'Caveat',cursive",fontSize:20,color:"#333",lineHeight:1.4,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{item.text||""}</div>
+                </div>
+                <div style={{position:"absolute",width:0,height:0,...{bottom:{bottom:-12,left:24,borderLeft:"10px solid transparent",borderRight:"10px solid transparent",borderTop:`12px solid ${item.color||"#fff"}`},top:{top:-12,left:24,borderLeft:"10px solid transparent",borderRight:"10px solid transparent",borderBottom:`12px solid ${item.color||"#fff"}`}}[item.tailDir||'bottom']||{}}}/>
+              </div>
+            );
+            if(item.type==='cutout')return(
+              <div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,pointerEvents:"none"}}>
+                <img src={item.url} style={{maxWidth:item.w||160,maxHeight:item.h||160,display:"block",filter:"drop-shadow(2px 4px 8px rgba(0,0,0,0.3))"}} alt=""/>
+              </div>
+            );
+            if(item.type==='markertext')return(
+              <div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(${item.scale||1})`,pointerEvents:"none"}}>
+                <div style={{fontFamily:"'Permanent Marker',cursive",fontSize:24,color:item.color||"#1a1a1a",whiteSpace:"nowrap"}}>{item.text||""}</div>
               </div>
             );
             return null;
