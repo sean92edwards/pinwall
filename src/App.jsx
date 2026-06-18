@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 import Auth from "./Auth";
 import { removeBackground } from "@imgly/background-removal";
 
-const STICKERS = ["⭐","❤️","🌟","✨","🎉","🌈","🌸","🦋","🍀","🎨","🔥","💫","🌺","🦄","🍭","🌙","☀️","🎀","🐚","🍂","🦊","🐝","🍓","🎠","🌊","🪄","🏆","🎯","🎪","🎭","😂","😍","🥳","😭","🤩","😎","🥰","😅","🙌","👏"];
+const STICKERS = ["💖","⭐","✨","�","💫","�","�","�","👑","🎀","�","�","�","�","�","�","⚡","🔥","�","🩷","💜","💛","�","🤍","😂","😍","🥳","😭","🤩","😎","🥰","😅","🙌","👏","💋","🫶","🪩","🎂","🍰","🥤"];;
 
 const BOOK_THEMES = [
   {c1:"#f7da78",c2:"#f0c94f",text:"#7c5a1c",shadow:"rgba(150,110,30,0.18)"},
@@ -79,7 +79,7 @@ function HorizontalWall({session}){
   const [cuttingOut,setCuttingOut]=useState(false);
   const [viewPhoto,setViewPhoto]=useState(null);
   const [doodling,setDoodling]=useState(false);
-  const [doodleColor,setDoodleColor]=useState("#e63946");
+  const [doodleColor,setDoodleColor]=useState("#1a1a1a");
   const [doodleWidth,setDoodleWidth]=useState(3);
   const [currentPath,setCurrentPath]=useState(null);
   const doodlePoints=useRef([]);
@@ -429,7 +429,7 @@ function HorizontalWall({session}){
           <button onClick={()=>{setDoodling(d=>!d);if(doodling)setCurrentPath(null);}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:doodling?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>{if(!doodling)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!doodling)e.currentTarget.style.background="transparent";}}><span style={{fontSize:15}}>✏️</span>Doodle</button>
         </div>
         {doodling&&<div style={{position:"absolute",left:"50%",transform:"translateX(-50%)",top:52,display:"flex",gap:6,alignItems:"center",background:"rgba(0,0,0,0.8)",borderRadius:20,padding:"6px 12px",zIndex:200}}>
-          {["#e63946","#1a1a1a","#2a9d8f","#e9c46a","#457b9d","#e76f51","#ffffff"].map(c=><div key={c} onClick={()=>setDoodleColor(c)} style={{width:20,height:20,borderRadius:"50%",background:c,border:doodleColor===c?"2px solid #4a90e2":"2px solid rgba(255,255,255,0.3)",cursor:"pointer"}}/>)}
+          {["#1a1a1a","#e63980","#e63946","#2a9d8f","#e9c46a","#457b9d","#ffffff"].map(c=><div key={c} onClick={()=>setDoodleColor(c)} style={{width:20,height:20,borderRadius:"50%",background:c,border:doodleColor===c?"2px solid #4a90e2":"2px solid rgba(255,255,255,0.3)",cursor:"pointer"}}/>)}
           <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
           {[2,4,8].map(w=><div key={w} onClick={()=>setDoodleWidth(w)} style={{width:24,height:24,borderRadius:"50%",background:doodleWidth===w?"rgba(255,255,255,0.2)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><div style={{width:w*2,height:w*2,borderRadius:"50%",background:"white"}}/></div>)}
           <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
@@ -481,15 +481,7 @@ function HorizontalWall({session}){
             </div>);}
             if(item.type==='doodle'){return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"default",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}}}>
               <svg width={item.w} height={item.h} viewBox={`0 0 ${item.w} ${item.h}`} style={{overflow:"visible",display:"block"}}>
-                <defs>
-                  <filter id={`crayon-${item.id}`} x="-20%" y="-20%" width="140%" height="140%">
-                    <feTurbulence type="fractalNoise" baseFrequency="1.5 0.8" numOctaves="3" seed={item.id%100} result="noise"/>
-                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-                    <feGaussianBlur in="displaced" stdDeviation="0.4"/>
-                  </filter>
-                </defs>
-                <path d={item.path} fill="none" stroke={item.color||"#e63946"} strokeWidth={(item.strokeWidth||3)*1.8} strokeLinecap="round" strokeLinejoin="round" filter={`url(#crayon-${item.id})`} opacity="0.6"/>
-                <path d={item.path} fill="none" stroke={item.color||"#e63946"} strokeWidth={(item.strokeWidth||3)*0.7} strokeLinecap="round" strokeLinejoin="round" filter={`url(#crayon-${item.id})`} opacity="0.9"/>
+                <path d={item.path} fill="none" stroke={item.color||"#e63946"} strokeWidth={(item.strokeWidth||3)*1.5} strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
               </svg>
               {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div><div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
             </div>);}
@@ -501,9 +493,7 @@ function HorizontalWall({session}){
           })}
         </div>
         {currentPath&&<svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:8,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
-          <defs><filter id="crayon-live" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="1.5 0.8" numOctaves="3" seed="42" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5" xChannelSelector="R" yChannelSelector="G" result="displaced"/><feGaussianBlur in="displaced" stdDeviation="0.4"/></filter></defs>
-          <path d={currentPath} fill="none" stroke={doodleColor} strokeWidth={doodleWidth*1.8/view.zoom} strokeLinecap="round" strokeLinejoin="round" filter="url(#crayon-live)" opacity="0.6"/>
-          <path d={currentPath} fill="none" stroke={doodleColor} strokeWidth={doodleWidth*0.7/view.zoom} strokeLinecap="round" strokeLinejoin="round" filter="url(#crayon-live)" opacity="0.9"/>
+          <path d={currentPath} fill="none" stroke={doodleColor} strokeWidth={doodleWidth*1.5/view.zoom} strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
         </svg>}
         <button className="edit-wall-mobile" onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} style={{position:"absolute",top:12,right:12,zIndex:60,display:"none",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,background:editing?"#2a9d8f":"rgba(44,38,32,0.85)",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.3)"}}>{editing?"✓ Done":"✏️ Edit"}</button>
         <div className="wall-hint" style={{position:"absolute",left:16,bottom:14,zIndex:60,fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.04em",color:"rgba(255,255,255,0.55)",pointerEvents:"none"}}>{doodling?"Draw on the board":"drag to pan · scroll to zoom · Shift + scroll to pan"}</div>
