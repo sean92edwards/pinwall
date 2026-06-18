@@ -314,26 +314,34 @@ function HorizontalWall({session}){
     if(!item.url||!session?.user||cuttingOut)return;
     setCuttingOut(true);
     try{
-      // Pass URL directly to removeBackground — it handles fetching internally
-      const resultBlob=await removeBackground(item.url,{output:{format:'image/png'}});
-      // Upload the cutout to Supabase storage
+      // Fetch the image as blob to avoid CORS issues
+      const img=new Image();
+      img.crossOrigin="anonymous";
+      img.src=item.url;
+      await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;});
+      const canvas=document.createElement('canvas');
+      canvas.width=img.naturalWidth;
+      canvas.height=img.naturalHeight;
+      canvas.getContext('2d').drawImage(img,0,0);
+      const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
+      const resultBlob=await removeBackground(blob,{output:{format:'image/png'}});
+      // Upload the cutout
       const fileName=`${session.user.id}/cutouts/${Date.now()}.png`;
       const{error}=await supabase.storage.from('photos').upload(fileName,resultBlob,{contentType:'image/png'});
       if(error){console.error('Cutout upload error:',error);setCuttingOut(false);return;}
       const{data:{publicUrl}}=supabase.storage.from('photos').getPublicUrl(fileName);
-      // Add as a new item on the wall near the original photo
-      const img=new Image();
+      const resultImg=new Image();
       const objectUrl=URL.createObjectURL(resultBlob);
-      img.onload=()=>{
+      resultImg.onload=()=>{
         URL.revokeObjectURL(objectUrl);
-        const maxDim=200;const ratio=img.width/img.height;
+        const maxDim=200;const ratio=resultImg.width/resultImg.height;
         const w=Math.max(100,ratio>=1?maxDim:maxDim*ratio);
         const h=Math.max(100,ratio>=1?maxDim/ratio:maxDim);
         setItems(p=>[{id:Date.now(),type:'cutout',url:publicUrl,cx:item.cx+120,cy:item.cy,rot:0,w,h,zIndex:maxZ+1},...p]);
         setMaxZ(z=>z+1);setCuttingOut(false);
       };
-      img.onerror=()=>{URL.revokeObjectURL(objectUrl);setCuttingOut(false);};
-      img.src=objectUrl;
+      resultImg.onerror=()=>{URL.revokeObjectURL(objectUrl);setCuttingOut(false);};
+      resultImg.src=objectUrl;
     }catch(e){
       console.error('Cutout error:',e);
       setCuttingOut(false);
