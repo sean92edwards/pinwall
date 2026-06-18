@@ -632,8 +632,18 @@ function PhotoBook({album,onClose,session}){
     const img=new Image();
     img.onload=()=>{
       URL.revokeObjectURL(objectUrl);
-      const maxDim=180;const ratio=img.width/img.height;const w=ratio>=1?maxDim:maxDim*ratio;const h=ratio>=1?maxDim/ratio:maxDim;
-      setStickersByPage(prev=>({...prev,[page]:[...(prev[page]||[]),{id:Date.now(),url:publicUrl,cx:200+Math.random()*200,cy:150+Math.random()*120,w,h,rot:(Math.random()-0.5)*12,zIndex:maxZ+1}]}));
+      // Consistent size for all photos
+      const photoW=180;const photoH=140;
+      // Grid layout: 3 columns, evenly spaced
+      const existing=(stickersByPage[page]||[]).filter(s=>s.url);
+      const count=existing.length;
+      const cols=3;
+      const col=count%cols;
+      const row=Math.floor(count/cols);
+      const startX=120;const startY=100;const gapX=200;const gapY=180;
+      const cx=startX+col*gapX;
+      const cy=startY+row*gapY;
+      setStickersByPage(prev=>({...prev,[page]:[...(prev[page]||[]),{id:Date.now(),url:publicUrl,cx,cy,w:photoW,h:photoH,rot:0,zIndex:maxZ+1}]}));
       setMaxZ(z=>z+1);setUploadingBook(false);
     };
     img.onerror=()=>{URL.revokeObjectURL(objectUrl);setUploadingBook(false);};
