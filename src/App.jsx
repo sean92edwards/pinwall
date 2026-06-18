@@ -322,9 +322,10 @@ function HorizontalWall({session}){
       const objectUrl=URL.createObjectURL(resultBlob);
       img.onload=()=>{
         URL.revokeObjectURL(objectUrl);
-        const maxDim=160;const ratio=img.width/img.height;
-        const w=ratio>=1?maxDim:maxDim*ratio;const h=ratio>=1?maxDim/ratio:maxDim;
-        setItems(p=>[{id:Date.now(),type:'photo',url:publicUrl,cx:item.cx+80,cy:item.cy+80,rot:(Math.random()-0.5)*10,w,h,zIndex:maxZ+1},...p]);
+        const maxDim=200;const ratio=img.width/img.height;
+        const w=Math.max(100,ratio>=1?maxDim:maxDim*ratio);
+        const h=Math.max(100,ratio>=1?maxDim/ratio:maxDim);
+        setItems(p=>[{id:Date.now(),type:'photo',url:publicUrl,cx:item.cx+120,cy:item.cy,rot:0,w,h,zIndex:maxZ+1},...p]);
         setMaxZ(z=>z+1);setCuttingOut(false);
       };
       img.onerror=()=>{URL.revokeObjectURL(objectUrl);setCuttingOut(false);};
