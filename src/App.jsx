@@ -93,6 +93,8 @@ function HorizontalWall({session}){
   useEffect(()=>{doodlingRef.current=doodling;},[doodling]);
   useEffect(()=>{erasingRef.current=erasing;},[erasing]);
   const [view,setView]=useState({x:80,y:80,zoom:1});
+  const [homeView,setHomeView]=useState(null);
+  const [homeViewSet,setHomeViewSet]=useState(false);
   const [vp,setVp]=useState({w:1200,h:700});
   const dragStart=useRef(null);
   const panStart=useRef(null);
@@ -122,6 +124,11 @@ function HorizontalWall({session}){
         const loadedMaxZ=Math.max(...data.items.map(i=>i.zIndex||1),20);
         setMaxZ(loadedMaxZ);
       }
+      // Load home view from localStorage
+      try{
+        const saved=localStorage.getItem('pinwall_home_view');
+        if(saved){const hv=JSON.parse(saved);setHomeView(hv);setView(hv);setHomeViewSet(true);}
+      }catch(e){}
       hasLoaded.current=true;
     };
     loadWall();
@@ -451,6 +458,7 @@ function HorizontalWall({session}){
           <button onClick={()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'markertext',text:"",cx:c.x,cy:c.y,rot:0,color:doodleColorRef.current,scale:1,zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setDoodling(false);setEditing(true);setSelected(id);setEditingText(id);}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Permanent Marker',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Aa Text</button>
         </div>}
         <div style={{position:"absolute",right:18,top:"50%",transform:"translateY(-50%)",display:"flex",gap:10,alignItems:"center",className:"edit-btn-desktop"}}>
+          {editing&&<button onClick={()=>{const hv={x:view.x,y:view.y,zoom:view.zoom};setHomeView(hv);setHomeViewSet(true);localStorage.setItem('pinwall_home_view',JSON.stringify(hv));}} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,background:homeViewSet?"#2a9d8f":"rgba(44,38,32,0.7)",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{homeViewSet?"📍 Home set":"📍 Set home view"}</button>}
           <button onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} className="tb-btn edit-wall-desktop" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,background:editing?"#2a9d8f":"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
         </div>
       </div>
