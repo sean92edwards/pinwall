@@ -125,15 +125,17 @@ function HorizontalWall({session}){
         const loadedMaxZ=Math.max(...data.items.map(i=>i.zIndex||1),20);
         setMaxZ(loadedMaxZ);
       }
-      // Load home view from localStorage only on first visit this session
+      // Load home view from localStorage only on first mount this session
       try{
-        if(!sessionStorage.getItem('pinwall_view_applied')){
-          const saved=localStorage.getItem('pinwall_home_view');
-          if(saved){const hv=JSON.parse(saved);setHomeView(hv);setView(hv);setHomeViewSet(true);}
-          sessionStorage.setItem('pinwall_view_applied','1');
-        } else {
-          const saved=localStorage.getItem('pinwall_home_view');
-          if(saved)setHomeViewSet(true);
+        const saved=localStorage.getItem('pinwall_home_view');
+        if(saved){
+          setHomeViewSet(true);
+          const hv=JSON.parse(saved);
+          setHomeView(hv);
+          if(!window.__pinwall_view_applied){
+            setView(hv);
+            window.__pinwall_view_applied=true;
+          }
         }
       }catch(e){}
       hasLoaded.current=true;
