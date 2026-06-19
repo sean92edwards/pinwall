@@ -95,6 +95,7 @@ function HorizontalWall({session}){
   const [view,setView]=useState({x:80,y:80,zoom:1});
   const [homeView,setHomeView]=useState(null);
   const [homeViewSet,setHomeViewSet]=useState(false);
+  const clearedDoodles=useRef([]);
   const [vp,setVp]=useState({w:1200,h:700});
   const dragStart=useRef(null);
   const panStart=useRef(null);
@@ -451,7 +452,8 @@ function HorizontalWall({session}){
           {[2,4,8].map(w=><div key={w} onClick={()=>setDoodleWidth(w)} style={{width:24,height:24,borderRadius:"50%",background:doodleWidth===w?"rgba(255,255,255,0.2)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><div style={{width:w*2,height:w*2,borderRadius:"50%",background:"white"}}/></div>)}
           <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
           <button onClick={()=>{const last=items.find(i=>i.type==='doodle');if(last)setItems(p=>p.filter(i=>i.id!==last.id));}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Undo</button>
-          <button onClick={()=>setItems(p=>p.filter(i=>i.type!=='doodle'&&i.type!=='markertext'))} style={{background:"#e63946",border:"none",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Clear all</button>
+          <button onClick={()=>{clearedDoodles.current=items.filter(i=>i.type==='doodle'||i.type==='markertext');setItems(p=>p.filter(i=>i.type!=='doodle'&&i.type!=='markertext'));}} style={{background:"#e63946",border:"none",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Clear all</button>
+          <button onClick={()=>{if(clearedDoodles.current.length){setItems(p=>[...clearedDoodles.current,...p]);clearedDoodles.current=[];}}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:clearedDoodles.current.length?"pointer":"default",opacity:clearedDoodles.current.length?1:0.4}}>Redo</button>
           <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
           <button onClick={()=>setErasing(e=>!e)} style={{background:erasing?"#fff":"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"3px 10px",color:erasing?"#1a1a1a":"#fff",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>🧹 Eraser</button>
           <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
