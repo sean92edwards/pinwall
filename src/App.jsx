@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
 import Auth from "./Auth";
 import { removeBackground } from "@imgly/background-removal";
 
-const STICKERS = ["💖","⭐","✨","�","💫","�","�","�","👑","🎀","�","�","�","�","�","�","⚡","🔥","�","🩷","💜","💛","�","🤍","😂","😍","🥳","😭","🤩","😎","🥰","😅","🙌","👏","💋","🫶","🪩","🎂","🍰","🥤"];;
+const STICKERS = ["\u{1F496}","\u2B50","\u2728","\u{1F31F}","\u{1F4AB}","\u{1F389}","\u{1F942}","\u{1F37E}","\u{1F451}","\u{1F380}","\u{1F48E}","\u{1F98B}","\u{1F338}","\u{1F388}","\u{1F38A}","\u{1F49D}","\u26A1","\u{1F525}","\u{1F495}","\u{1F49C}","\u{1F49B}","\u{1F90D}","\u{1F602}","\u{1F60D}","\u{1F973}","\u{1F62D}","\u{1F929}","\u{1F60E}","\u{1F970}","\u{1F605}","\u{1F64C}","\u{1F44F}","\u{1F48B}","\u{1F382}","\u{1F370}","\u{1F964}","\u{1F3C6}","\u{1F381}","\u{1F3B6}","\u{1F3B5}"];
 
 const BOOK_THEMES = [
   {c1:"#f7da78",c2:"#f0c94f",text:"#7c5a1c",shadow:"rgba(150,110,30,0.18)"},
