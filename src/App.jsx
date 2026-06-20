@@ -78,6 +78,7 @@ function HorizontalWall({session}){
   const [showPhotoMenu,setShowPhotoMenu]=useState(false);
   const photoModeRef=useRef('polaroid');
   const [uploading,setUploading]=useState(false);
+  const [uploadingAudio,setUploadingAudio]=useState(false);
   const [cuttingOut,setCuttingOut]=useState(false);
   const [viewPhoto,setViewPhoto]=useState(null);
   const [doodling,setDoodling]=useState(false);
@@ -350,6 +351,19 @@ function HorizontalWall({session}){
   const addSticker=emoji=>{const c=centerWorld();setItems(p=>[{id:Date.now(),type:'sticker',emoji,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*30,size:50,zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setShowStickers(false);};
   const addBubble=()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'bubble',text:"",cx:c.x+(Math.random()-0.5)*80,cy:c.y+(Math.random()-0.5)*80,rot:(Math.random()-0.5)*8,color:"#ffb6c8",w:160,h:100,zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setEditing(true);setSelected(id);setEditingText(id);};
   const addSpeechBubble=()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'speech',text:"",cx:c.x+(Math.random()-0.5)*80,cy:c.y+(Math.random()-0.5)*80,rot:0,color:"#ffffff",tailDir:"bottom",zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setEditing(true);setSelected(id);setEditingText(id);};
+  const addAudio=async(file)=>{
+    if(!file||!session?.user)return;
+    if(file.size>15*1024*1024){alert('Audio must be under 15MB.');return;}
+    setUploadingAudio(true);
+    const ext=(file.name.split('.').pop()||'mp3').toLowerCase();
+    const fileName=`${session.user.id}/audio/${Date.now()}.${ext}`;
+    const{error}=await supabase.storage.from('photos').upload(fileName,file);
+    if(error){console.error('Audio upload error:',error);alert('Audio upload failed: '+error.message);setUploadingAudio(false);return;}
+    const{data:{publicUrl}}=supabase.storage.from('photos').getPublicUrl(fileName);
+    const c=centerWorld();
+    setItems(p=>[{id:Date.now(),type:'audio',url:publicUrl,cx:c.x,cy:c.y,loop:false,range:600,rot:0,zIndex:maxZ+1},...p]);
+    setMaxZ(z=>z+1);setUploadingAudio(false);
+  };
 
   const cutOutPhoto=async(item)=>{
     if(!item.url||!session?.user||cuttingOut)return;
@@ -499,6 +513,7 @@ function HorizontalWall({session}){
         </div>}
         <div style={{position:"absolute",right:18,top:"50%",transform:"translateY(-50%)",display:"flex",gap:10,alignItems:"center",className:"edit-btn-desktop"}}>
           {editing&&<button onClick={()=>{const hv={x:view.x,y:view.y,zoom:view.zoom};setHomeView(hv);setHomeViewSet(true);localStorage.setItem('pinwall_home_view',JSON.stringify(hv));}} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,background:homeViewSet?"#2a9d8f":"rgba(44,38,32,0.7)",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{homeViewSet?"📍 Home set":"📍 Set home view"}</button>}
+          {editing&&<label style={{display:"inline-flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:24,cursor:uploadingAudio?"default":"pointer",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,background:"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)",opacity:uploadingAudio?0.6:1}}>{uploadingAudio?"⏳":"🎵 Audio"}<input type="file" accept="audio/*" style={{display:"none"}} onChange={e=>{addAudio(e.target.files[0]);e.target.value='';}} disabled={uploadingAudio}/></label>}
           <button onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} className="tb-btn edit-wall-desktop" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,background:editing?"#2a9d8f":"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
         </div>
       </div>
@@ -507,6 +522,21 @@ function HorizontalWall({session}){
         <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,pointerEvents:(doodling&&!erasing)?"none":"auto"}}>
           {sorted.map(item=>{
             const isSel=editing&&selected===item.id;
+
+            if(item.type==='audio'){
+              if(!editing)return null;
+              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:"grab",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}}}>
+                <div style={{width:96,height:60,borderRadius:8,background:"linear-gradient(160deg,#3a3327,#1f1b14)",boxShadow:isSel?"0 6px 18px rgba(0,0,0,0.4),0 0 0 2px rgba(74,144,226,0.6)":"0 5px 14px rgba(0,0,0,0.35)",position:"relative"}}>
+                  <div style={{position:"absolute",top:7,left:9,right:9,height:18,borderRadius:4,background:"#d9c7a3",display:"flex",alignItems:"center",justifyContent:"space-around"}}><div style={{width:9,height:9,borderRadius:"50%",background:"#1f1b14"}}/><div style={{width:9,height:9,borderRadius:"50%",background:"#1f1b14"}}/></div>
+                  <div style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontSize:9,color:"#e9c46a",fontFamily:"'Nunito',sans-serif",fontWeight:700,letterSpacing:"0.04em"}}>{item.loop?"↻ LOOP":"▶ ONCE"}</div>
+                </div>
+                {isSel&&<div style={{position:"absolute",top:-44,left:"50%",transform:"translateX(-50%)",display:"flex",gap:5,background:"rgba(0,0,0,0.8)",borderRadius:18,padding:"5px 8px",zIndex:20}} onClick={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()}>
+                  <button onClick={()=>{try{const a=new Audio(item.url);a.play();}catch(err){}}} style={{background:"#2a9d8f",border:"none",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>▶ Play</button>
+                  <button onClick={()=>setItems(p=>p.map(i=>i.id===item.id?{...i,loop:!i.loop}:i))} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>{item.loop?"↻ Loop":"▶ Once"}</button>
+                  <button onClick={()=>{setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{background:"#e63946",border:"none",borderRadius:12,padding:"3px 9px",color:"#fff",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>✕</button>
+                </div>}
+              </div>);
+            }
             if(lod==='low'){
               const w=item.type==='sticker'?(item.size||44):(item.type==='bubble'?150*(item.scale||1):(item.w||148));
               const h=item.type==='sticker'?(item.size||44):(item.type==='bubble'?70*(item.scale||1):(item.h||148));
