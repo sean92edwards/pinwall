@@ -75,6 +75,8 @@ function HorizontalWall({session}){
   const [maxZ,setMaxZ]=useState(20);
   const [showStickers,setShowStickers]=useState(false);
   const [showNoteMenu,setShowNoteMenu]=useState(false);
+  const [showPhotoMenu,setShowPhotoMenu]=useState(false);
+  const photoModeRef=useRef('polaroid');
   const [uploading,setUploading]=useState(false);
   const [cuttingOut,setCuttingOut]=useState(false);
   const [viewPhoto,setViewPhoto]=useState(null);
@@ -411,7 +413,7 @@ function HorizontalWall({session}){
       URL.revokeObjectURL(objectUrl);
       const maxDim=200;const ratio=img.width/img.height;
       const w=ratio>=1?maxDim:maxDim*ratio;const h=ratio>=1?maxDim/ratio:maxDim;
-      setItems(p=>[{id:Date.now(),type:'photo',url:publicUrl,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*12,w,h,zIndex:maxZ+1},...p]);
+      setItems(p=>[{id:Date.now(),type:photoModeRef.current==='frameless'?'cutout':'photo',url:publicUrl,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*12,w,h,zIndex:maxZ+1},...p]);
       setMaxZ(z=>z+1);setUploading(false);
     };
     img.onerror=()=>{URL.revokeObjectURL(objectUrl);setUploading(false);};
@@ -452,10 +454,15 @@ function HorizontalWall({session}){
     <div style={{display:"flex",flexDirection:"column",height:"calc(100dvh - 44px)"}}>
       <div className="wall-toolbar" style={{background:"#ffffff",borderBottom:"1px solid #e8e0d0",padding:"10px 20px",display:"flex",alignItems:"center",flexShrink:0,zIndex:90,position:"relative",boxShadow:"0 2px 8px rgba(120,80,30,0.08)"}}>
         <div className="tb-pill" style={{margin:"0 auto",display:"flex",alignItems:"center",gap:2,background:"#f5f0e8",borderRadius:30,padding:5,border:"1px solid #e0d5c0",boxShadow:"0 2px 10px rgba(120,90,40,0.10)"}}>
-          <label className="tb-btn" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:uploading?"default":"pointer",opacity:uploading?0.55:1}} onMouseEnter={e=>{if(!uploading)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-            <span style={{fontSize:15}}>{uploading?"⏳":"📷"}</span>{uploading?"Uploading…":"Photo"}
-            <input type="file" accept="image/*" multiple style={{display:"none"}} onChange={e=>{Array.from(e.target.files).forEach((f,i)=>setTimeout(()=>addPhoto(f),i*100));e.target.value='';}} disabled={uploading}/>
-          </label>
+          <div style={{position:"relative"}}>
+            <button onClick={()=>setShowPhotoMenu(s=>!s)} className="tb-btn" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:showPhotoMenu?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:uploading?"default":"pointer",opacity:uploading?0.55:1}} onMouseEnter={e=>{if(!showPhotoMenu)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!showPhotoMenu)e.currentTarget.style.background="transparent";}}>
+              <span style={{fontSize:15}}>{uploading?"⏳":"📷"}</span>{uploading?"Uploading…":"Photo"}
+            </button>
+            {showPhotoMenu&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:46,left:"50%",transform:"translateX(-50%)",background:"#fffdf8",border:"1px solid #ece1cf",borderRadius:12,padding:10,zIndex:200,boxShadow:"0 12px 36px rgba(80,60,20,0.22)",width:170}}>
+              <label style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 10px",border:"none",background:"transparent",borderRadius:8,fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background="#f3ecdf"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>🖼️ Polaroid<input type="file" accept="image/*" multiple style={{display:"none"}} onChange={e=>{photoModeRef.current='polaroid';Array.from(e.target.files).forEach((f,i)=>setTimeout(()=>addPhoto(f),i*100));e.target.value='';setShowPhotoMenu(false);}} disabled={uploading}/></label>
+              <label style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 10px",border:"none",background:"transparent",borderRadius:8,fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background="#f3ecdf"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>📐 Frameless<input type="file" accept="image/*" multiple style={{display:"none"}} onChange={e=>{photoModeRef.current='frameless';Array.from(e.target.files).forEach((f,i)=>setTimeout(()=>addPhoto(f),i*100));e.target.value='';setShowPhotoMenu(false);}} disabled={uploading}/></label>
+            </div>}
+          </div>
           <div style={{width:1,height:20,background:"#d8cdb8"}}/>
           <div style={{position:"relative"}}>
             <button onClick={()=>setShowStickers(s=>!s)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:showStickers?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>{if(!showStickers)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!showStickers)e.currentTarget.style.background="transparent";}}><span style={{fontSize:15}}>⭐</span>Sticker</button>
