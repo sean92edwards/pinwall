@@ -556,20 +556,7 @@ function HorizontalWall({session}){
             const isSel=editing&&selected===item.id;
 
             if(item.type==='audio'){
-              if(!editing)return null;
-              const range=item.range||600;
-              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:"translate(-50%,-50%)",cursor:"grab",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}}}>
-                {isSel&&<div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:range*2,height:range*2,borderRadius:"50%",border:"2px dashed rgba(233,196,106,0.5)",background:"radial-gradient(circle,rgba(233,196,106,0.08) 0%,transparent 70%)",pointerEvents:"none"}}/>}
-                {isSel&&<div onMouseDown={e=>{e.stopPropagation();e.preventDefault();const startX=e.clientX;const startRange=range;const onMove=ev=>{const dx=ev.clientX-startX;setItems(p=>p.map(i=>i.id===item.id?{...i,range:Math.max(100,startRange+dx)}:i));};const onUp=()=>{window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);};window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);}} onTouchStart={e=>{e.stopPropagation();const startX=e.touches[0].clientX;const startRange=range;const onMove=ev=>{const dx=ev.touches[0].clientX-startX;setItems(p=>p.map(i=>i.id===item.id?{...i,range:Math.max(100,startRange+dx)}:i));};const onUp=()=>{window.removeEventListener('touchmove',onMove);window.removeEventListener('touchend',onUp);};window.addEventListener('touchmove',onMove);window.addEventListener('touchend',onUp);}} style={{position:"absolute",left:"50%",top:"50%",transform:`translate(${range}px,-50%)`,width:20,height:20,borderRadius:"50%",background:"#e9c46a",border:"2px solid white",boxShadow:"0 2px 6px rgba(0,0,0,0.4)",cursor:"ew-resize",zIndex:15}}/>}
-                <div style={{width:96,height:60,borderRadius:8,background:"linear-gradient(160deg,#3a3327,#1f1b14)",boxShadow:isSel?"0 6px 18px rgba(0,0,0,0.4),0 0 0 2px rgba(74,144,226,0.6)":"0 5px 14px rgba(0,0,0,0.35)",position:"relative"}}>
-                  <div style={{position:"absolute",top:7,left:9,right:9,height:18,borderRadius:4,background:"#d9c7a3",display:"flex",alignItems:"center",justifyContent:"space-around"}}><div style={{width:9,height:9,borderRadius:"50%",background:"#1f1b14"}}/><div style={{width:9,height:9,borderRadius:"50%",background:"#1f1b14"}}/></div>
-                  <div style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontSize:9,color:"#e9c46a",fontFamily:"'Nunito',sans-serif",fontWeight:700,letterSpacing:"0.04em"}}>{item.loop?"↻ LOOP":"▶ ONCE"}</div>
-                </div>
-                {isSel&&<div style={{position:"absolute",top:-44,left:"50%",transform:"translateX(-50%)",display:"flex",gap:5,background:"rgba(0,0,0,0.8)",borderRadius:18,padding:"5px 8px",zIndex:20}} onClick={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()}>
-                  <button onClick={()=>setItems(p=>p.map(i=>i.id===item.id?{...i,loop:!i.loop}:i))} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>{item.loop?"↻ Loop":"▶ Once"}</button>
-                  <button onClick={()=>{setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{background:"#e63946",border:"none",borderRadius:12,padding:"3px 9px",color:"#fff",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>✕</button>
-                </div>}
-              </div>);
+              return null; // Audio rendered separately on top
             }
             if(lod==='low'){
               const w=item.type==='sticker'?(item.size||44):(item.type==='bubble'?150*(item.scale||1):(item.w||148));
@@ -625,6 +612,24 @@ function HorizontalWall({session}){
             return null;
           })}
         </div>
+        {editing&&<div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,zIndex:9,pointerEvents:"auto"}}>
+          {items.filter(i=>i.type==='audio').map(item=>{
+            const isSel=editing&&selected===item.id;
+            const range=item.range||600;
+            return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,transform:"translate(-50%,-50%)",cursor:"grab",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{e.stopPropagation();setSelected(item.id);}}>
+              {isSel&&<div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:range*2,height:range*2,borderRadius:"50%",border:"2px dashed rgba(233,196,106,0.5)",background:"radial-gradient(circle,rgba(233,196,106,0.08) 0%,transparent 70%)",pointerEvents:"none"}}/>}
+              {isSel&&<div onMouseDown={e=>{e.stopPropagation();e.preventDefault();const startX=e.clientX;const startRange=range;const onMove=ev=>{const dx=ev.clientX-startX;setItems(p=>p.map(i=>i.id===item.id?{...i,range:Math.max(100,startRange+dx)}:i));};const onUp=()=>{window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);};window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);}} onTouchStart={e=>{e.stopPropagation();const startX=e.touches[0].clientX;const startRange=range;const onMove=ev=>{const dx=ev.touches[0].clientX-startX;setItems(p=>p.map(i=>i.id===item.id?{...i,range:Math.max(100,startRange+dx)}:i));};const onUp=()=>{window.removeEventListener('touchmove',onMove);window.removeEventListener('touchend',onUp);};window.addEventListener('touchmove',onMove);window.addEventListener('touchend',onUp);}} style={{position:"absolute",left:"50%",top:"50%",transform:`translate(${range}px,-50%)`,width:20,height:20,borderRadius:"50%",background:"#e9c46a",border:"2px solid white",boxShadow:"0 2px 6px rgba(0,0,0,0.4)",cursor:"ew-resize",zIndex:15}}/>}
+              <div style={{width:96,height:60,borderRadius:8,background:"linear-gradient(160deg,#3a3327,#1f1b14)",boxShadow:isSel?"0 6px 18px rgba(0,0,0,0.4),0 0 0 2px rgba(74,144,226,0.6)":"0 5px 14px rgba(0,0,0,0.35)",position:"relative"}}>
+                <div style={{position:"absolute",top:7,left:9,right:9,height:18,borderRadius:4,background:"#d9c7a3",display:"flex",alignItems:"center",justifyContent:"space-around"}}><div style={{width:9,height:9,borderRadius:"50%",background:"#1f1b14"}}/><div style={{width:9,height:9,borderRadius:"50%",background:"#1f1b14"}}/></div>
+                <div style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontSize:9,color:"#e9c46a",fontFamily:"'Nunito',sans-serif",fontWeight:700,letterSpacing:"0.04em"}}>{item.loop?"↻ LOOP":"▶ ONCE"}</div>
+              </div>
+              {isSel&&<div style={{position:"absolute",top:-44,left:"50%",transform:"translateX(-50%)",display:"flex",gap:5,background:"rgba(0,0,0,0.8)",borderRadius:18,padding:"5px 8px",zIndex:20}} onClick={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()}>
+                <button onClick={()=>setItems(p=>p.map(i=>i.id===item.id?{...i,loop:!i.loop}:i))} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>{item.loop?"↻ Loop":"▶ Once"}</button>
+                <button onClick={()=>{setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{background:"#e63946",border:"none",borderRadius:12,padding:"3px 9px",color:"#fff",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>✕</button>
+              </div>}
+            </div>);
+          })}
+        </div>}
         {currentPath&&<svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:8,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
           <path d={currentPath} fill="none" stroke={doodleColor} strokeWidth={doodleWidth*1.5/view.zoom} strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
         </svg>}
