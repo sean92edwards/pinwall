@@ -1270,7 +1270,7 @@ export default function Pinwall(){
           <span className="logo-text" style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:22,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:2}}>
-          {[["wall","📌","My Wall"],["shelf","📚","Library"],["friends","👥","Friends"]].map(([v,icon,label])=>(
+          {[["wall","📌","My Wall"],["shelf","📚","Library"]].map(([v,icon,label])=>(
             <button key={v} onClick={()=>{setView(v);if(v==='wall'&&openAlbum)setOpenAlbum(null);}} style={{background:"none",color:view===v?"#1a1a1a":"#888",border:"none",borderRadius:20,padding:"6px 12px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer",borderBottom:view===v?"2px solid #1a1a1a":"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1,lineHeight:1}}><span style={{fontSize:16}}>{icon}</span><span className="nav-label" style={{fontSize:10}}>{label}</span></button>
           ))}
         </div>
