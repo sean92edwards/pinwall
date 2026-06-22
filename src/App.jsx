@@ -66,7 +66,7 @@ function tb(bg,col){return{background:bg,color:col,border:"none",borderRadius:20
 function hdl(pos){const b={position:"absolute",zIndex:10,background:"#4a90e2",cursor:"grab",display:"flex",alignItems:"center",justifyContent:"center",color:"white",boxShadow:"0 1px 6px rgba(0,0,0,0.3)",border:"2px solid white"};if(pos==="top")return{...b,top:-30,left:"50%",transform:"translateX(-50%)",width:24,height:24,borderRadius:"50%",fontSize:14};if(pos==="br")return{...b,bottom:-5,right:-5,width:20,height:20,borderRadius:5,fontSize:11,cursor:"se-resize"};}
 const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
 
-function HorizontalWall({session}){
+function HorizontalWall({session,muted}){
   const [items,setItems]=useState([]);
   const [editing,setEditing]=useState(false);
   const [selected,setSelected]=useState(null);
@@ -473,7 +473,7 @@ function HorizontalWall({session}){
     audioItems.forEach(item=>{
       const dist=Math.hypot(item.cx-centerX,item.cy-centerY);
       const range=item.range||600;
-      const vol=Math.max(0,Math.min(1,1-dist/range));
+      const vol=muted?0:Math.max(0,Math.min(1,1-dist/range));
       if(!audioRefs.current[item.id]){
         const a=new Audio(item.url);
         a.loop=!!item.loop;
@@ -494,7 +494,7 @@ function HorizontalWall({session}){
         delete audioRefs.current[id];
       }
     });
-  },[items,view,vp]);
+  },[items,view,vp,muted]);
 
   return(
     <div style={{display:"flex",flexDirection:"column",height:"calc(100dvh - 44px)"}}>
@@ -1095,6 +1095,7 @@ export default function Pinwall(){
   const [shelves,setShelves]=useState([{id:1,albums:[]}]);
   const [shareToken,setShareToken]=useState(null);
   const [shareCopied,setShareCopied]=useState(false);
+  const [muted,setMuted]=useState(false);
   const [sharedView,setSharedView]=useState(null);
   const [friends,setFriends]=useState([]);
   const [viewingFriend,setViewingFriend]=useState(null);
@@ -1274,13 +1275,14 @@ export default function Pinwall(){
           ))}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <button onClick={()=>setMuted(m=>!m)} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:muted?"#e63946":"rgba(0,0,0,0.06)",color:muted?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>{muted?"🔇":"🔊"}</button>
           <button onClick={copyShareLink} style={{display:"inline-flex",alignItems:"center",gap:4,background:shareCopied?"#2a9d8f":"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"6px 12px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>
             {shareCopied?"✓":"🔗"}
           </button>
           <div onClick={()=>supabase.auth.signOut()} style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:12,cursor:"pointer"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
         </div>
       </div>
-      {view==="wall"&&<HorizontalWall session={session}/>}
+      {view==="wall"&&<HorizontalWall session={session} muted={muted}/>}
       {view==="shelf"&&<Bookshelf onOpenAlbum={setOpenAlbum} shelves={shelves} onAddAlbum={(shelfId,album)=>setShelves(prev=>prev.map(s=>s.id===shelfId?{...s,albums:[...s.albums,album]}:s))} onDeleteAlbum={id=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.filter(a=>a.id!==id)})));if(openAlbum?.id===id)setOpenAlbum(null);}} onRenameAlbum={(id,name)=>{setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,name}:a)})));if(openAlbum?.id===id)setOpenAlbum(prev=>({...prev,name}));}} onSetCover={(id,url)=>setShelves(prev=>prev.map(s=>({...s,albums:s.albums.map(a=>a.id===id?{...a,coverUrl:url}:a)})))} onAddShelf={()=>setShelves(prev=>[...prev,{id:Math.floor(Math.random()*2000000000),albums:[]}])} session={session}/>}
       {view==="friends"&&(
         <div style={{padding:"40px",minHeight:"calc(100dvh - 58px)",background:"#efe5d4"}}>
