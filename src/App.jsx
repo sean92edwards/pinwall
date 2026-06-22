@@ -60,6 +60,7 @@ function HorizontalWall({session,muted,editing,setEditing}){
   const [view,setView]=useState({x:80,y:80,zoom:1});
   const [homeView,setHomeView]=useState(null);
   const [homeViewSet,setHomeViewSet]=useState(false);
+  const [homeToast,setHomeToast]=useState(false);
   const clearedDoodles=useRef([]);
   const [vp,setVp]=useState({w:1200,h:700});
   const dragStart=useRef(null);
@@ -460,6 +461,7 @@ function HorizontalWall({session,muted,editing,setEditing}){
 
   return(
     <div style={{height:"calc(100dvh - 58px)",position:"relative",display:"flex",flexDirection:"column"}}>
+      {homeToast&&<div style={{position:"absolute",bottom:80,left:"50%",transform:"translateX(-50%)",zIndex:300,background:"rgba(0,0,0,0.8)",color:"#fff",borderRadius:20,padding:"8px 18px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,animation:"slideUp 0.2s ease"}}>Home view set ✓</div>}
       {editing&&<div className="wall-toolbar" style={{position:"absolute",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:200,display:"flex",alignItems:"center",gap:8,animation:"slideUp 0.2s ease"}}>
         <div className="tb-pill" style={{display:"flex",alignItems:"center",gap:2,background:"rgba(255,253,248,0.97)",borderRadius:30,padding:6,border:"1px solid #e0d5c0",boxShadow:"0 4px 20px rgba(0,0,0,0.18)",backdropFilter:"blur(8px)"}}>
           <div style={{position:"relative"}}>
@@ -492,7 +494,7 @@ function HorizontalWall({session,muted,editing,setEditing}){
           <div style={{width:1,height:20,background:"#d8cdb8"}}/>
           <button onClick={()=>{setDoodling(d=>!d);if(doodling){setCurrentPath(null);setErasing(false);}}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:doodling?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>{if(!doodling)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!doodling)e.currentTarget.style.background="transparent";}}><span style={{fontSize:15}}>✏️</span>Doodle</button>
           <div style={{width:1,height:20,background:"#d8cdb8"}}/>
-          <button onClick={()=>{const hv={x:view.x,y:view.y,zoom:view.zoom};setHomeView(hv);setHomeViewSet(true);localStorage.setItem('pinwall_home_view',JSON.stringify(hv));}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:homeViewSet?"#2a9d8f":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:homeViewSet?"#fff":"#3a3327",cursor:"pointer"}}><span style={{fontSize:15}}>📍</span>Home</button>
+          <button onClick={()=>{const hv={x:view.x,y:view.y,zoom:view.zoom};setHomeView(hv);setHomeViewSet(true);localStorage.setItem('pinwall_home_view',JSON.stringify(hv));setHomeToast(true);setTimeout(()=>setHomeToast(false),2000);}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}}><span style={{fontSize:15}}>📍</span>Home</button>
           <div style={{width:1,height:20,background:"#d8cdb8"}}/>
           <label style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,cursor:uploadingAudio?"default":"pointer",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",opacity:uploadingAudio?0.6:1}}><span style={{fontSize:15}}>{uploadingAudio?"⏳":"🎵"}</span>Sound<input type="file" accept="audio/*" style={{display:"none"}} onChange={e=>{addAudio(e.target.files[0]);e.target.value='';}} disabled={uploadingAudio}/></label>
         </div>
