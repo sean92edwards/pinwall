@@ -352,7 +352,7 @@ function HorizontalWall({session}){
   const addBubble=()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'bubble',text:"",cx:c.x+(Math.random()-0.5)*80,cy:c.y+(Math.random()-0.5)*80,rot:(Math.random()-0.5)*8,color:"#ffb6c8",w:160,h:100,zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setEditing(true);setSelected(id);setEditingText(id);};
   const addSpeechBubble=()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'speech',text:"",cx:c.x+(Math.random()-0.5)*80,cy:c.y+(Math.random()-0.5)*80,rot:0,color:"#ffffff",tailDir:"bottom",zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setEditing(true);setSelected(id);setEditingText(id);};
   const addAudio=async(file)=>{
-    if(!file||!session?.user)return;
+    if(!file||!session?.user||uploadingAudio)return;
     if(file.size>15*1024*1024){alert('Audio must be under 15MB.');return;}
     setUploadingAudio(true);
     const ext=(file.name.split('.').pop()||'mp3').toLowerCase();
@@ -361,7 +361,7 @@ function HorizontalWall({session}){
     if(error){console.error('Audio upload error:',error);alert('Audio upload failed: '+error.message);setUploadingAudio(false);return;}
     const{data:{publicUrl}}=supabase.storage.from('photos').getPublicUrl(fileName);
     const c=centerWorld();
-    setItems(p=>[{id:Date.now(),type:'audio',url:publicUrl,cx:c.x,cy:c.y,loop:false,range:600,rot:0,zIndex:maxZ+1},...p]);
+    setItems(p=>[{id:Date.now(),type:'audio',url:publicUrl,cx:c.x,cy:c.y,loop:false,playing:true,range:600,rot:0,zIndex:maxZ+1},...p]);
     setMaxZ(z=>z+1);setUploadingAudio(false);
   };
 
@@ -463,6 +463,38 @@ function HorizontalWall({session}){
   const itemHalf=it=>{if(it.type==='sticker')return(it.size||44);if(it.type==='bubble')return 170;return Math.max(it.w||148,it.h||148);};
   const visible=items.filter(it=>{const h=itemHalf(it);return it.cx+h>=wL&&it.cx-h<=wR&&it.cy+h>=wT&&it.cy-h<=wB;});
   const sorted=[...visible].sort((a,b)=>(a.zIndex||1)-(b.zIndex||1));
+
+  // Audio proximity playback
+  const audioRefs=useRef({});
+  useEffect(()=>{
+    const audioItems=items.filter(i=>i.type==='audio'&&i.url);
+    const centerX=(vp.w/2-view.x)/view.zoom;
+    const centerY=(vp.h/2-view.y)/view.zoom;
+    audioItems.forEach(item=>{
+      const dist=Math.hypot(item.cx-centerX,item.cy-centerY);
+      const range=item.range||600;
+      const vol=Math.max(0,Math.min(1,1-dist/range));
+      if(!audioRefs.current[item.id]){
+        const a=new Audio(item.url);
+        a.loop=!!item.loop;
+        a.volume=vol;
+        if(vol>0)a.play().catch(()=>{});
+        audioRefs.current[item.id]=a;
+      } else {
+        const a=audioRefs.current[item.id];
+        a.loop=!!item.loop;
+        a.volume=vol;
+        if(vol>0&&a.paused)a.play().catch(()=>{});
+        if(vol===0&&!a.paused)a.pause();
+      }
+    });
+    Object.keys(audioRefs.current).forEach(id=>{
+      if(!audioItems.find(i=>String(i.id)===id)){
+        audioRefs.current[id].pause();
+        delete audioRefs.current[id];
+      }
+    });
+  },[items,view,vp]);
 
   return(
     <div style={{display:"flex",flexDirection:"column",height:"calc(100dvh - 44px)"}}>
