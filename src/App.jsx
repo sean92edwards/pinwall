@@ -29,9 +29,8 @@ const INITIAL_ITEMS=[
 function hdl(pos){const b={position:"absolute",zIndex:10,background:"#4a90e2",cursor:"grab",display:"flex",alignItems:"center",justifyContent:"center",color:"white",boxShadow:"0 1px 6px rgba(0,0,0,0.3)",border:"2px solid white"};if(pos==="top")return{...b,top:-30,left:"50%",transform:"translateX(-50%)",width:24,height:24,borderRadius:"50%",fontSize:14};if(pos==="br")return{...b,bottom:-5,right:-5,width:20,height:20,borderRadius:5,fontSize:11,cursor:"se-resize"};}
 const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
 
-function HorizontalWall({session,muted}){
+function HorizontalWall({session,muted,editing,setEditing}){
   const [items,setItems]=useState([]);
-  const [editing,setEditing]=useState(false);
   const [selected,setSelected]=useState(null);
   const [editingText,setEditingText]=useState(null);
   const [editingCaption,setEditingCaption]=useState(null);
@@ -510,7 +509,6 @@ function HorizontalWall({session,muted}){
       <div style={{position:"absolute",top:-44,right:220,zIndex:200,display:"flex",gap:8,alignItems:"center"}}>
         {editing&&<button onClick={()=>{const hv={x:view.x,y:view.y,zoom:view.zoom};setHomeView(hv);setHomeViewSet(true);localStorage.setItem('pinwall_home_view',JSON.stringify(hv));}} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:20,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,background:homeViewSet?"#2a9d8f":"rgba(44,38,32,0.7)",color:"#fff"}}>{homeViewSet?"📍 Set":"📍 Home"}</button>}
         {editing&&<label style={{display:"inline-flex",alignItems:"center",gap:4,padding:"6px 12px",borderRadius:20,cursor:uploadingAudio?"default":"pointer",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,background:"#2c2620",color:"#fff",opacity:uploadingAudio?0.6:1}}>{uploadingAudio?"⏳":"🎵"}<input type="file" accept="audio/*" style={{display:"none"}} onChange={e=>{addAudio(e.target.files[0]);e.target.value='';}} disabled={uploadingAudio}/></label>}
-        <button onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:30,height:30,borderRadius:"50%",border:"none",cursor:"pointer",fontSize:14,background:editing?"#2a9d8f":"rgba(0,0,0,0.06)",color:editing?"#fff":"#888"}}>{editing?"✓":"✏️"}</button>
       </div>
       <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",background:"#c6a06a",backgroundImage:`radial-gradient(ellipse 120% 90% at 50% -5%,rgba(255,244,222,0.35) 0%,transparent 55%),radial-gradient(ellipse at 88% 108%,rgba(110,78,42,0.32) 0%,transparent 50%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='cork'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23cork)' opacity='0.4'/%3E%3C/svg%3E")`,backgroundSize:"100% 100%,100% 100%,150px 150px",userSelect:"none"}}>
       <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 90px rgba(0,0,0,0.22)",pointerEvents:"none",zIndex:5}}/>
@@ -765,6 +763,7 @@ export default function Pinwall(){
   const [shareToken,setShareToken]=useState(null);
   const [shareCopied,setShareCopied]=useState(false);
   const [muted,setMuted]=useState(false);
+  const [editing,setEditing]=useState(false);
   const [sharedView,setSharedView]=useState(null);
   const [friends,setFriends]=useState([]);
   const [viewingFriend,setViewingFriend]=useState(null);
@@ -916,6 +915,7 @@ export default function Pinwall(){
         </div>
         <div style={{flex:1}}></div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <button onClick={()=>setEditing(e=>!e)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:30,height:30,borderRadius:"50%",border:"none",cursor:"pointer",fontSize:14,background:editing?"#2a9d8f":"rgba(0,0,0,0.06)",color:editing?"#fff":"#888"}}>{editing?"✓":"✏️"}</button>
           <button onClick={()=>setMuted(m=>!m)} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:muted?"#e63946":"rgba(0,0,0,0.06)",color:muted?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>{muted?"🔇":"🔊"}</button>
           <button onClick={()=>setView("wall")} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:view==="wall"?"#2a9d8f":"rgba(0,0,0,0.06)",color:view==="wall"?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>📌</button>
           <button onClick={()=>setView("friends")} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:view==="friends"?"#2a9d8f":"rgba(0,0,0,0.06)",color:view==="friends"?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>👥</button>
@@ -925,7 +925,7 @@ export default function Pinwall(){
           <div onClick={()=>supabase.auth.signOut()} style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:12,cursor:"pointer"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
         </div>
       </div>
-      {view==="wall"&&<HorizontalWall session={session} muted={muted}/>}
+      {view==="wall"&&<HorizontalWall session={session} muted={muted} editing={editing} setEditing={setEditing}/>}
       {view==="friends"&&(
         <div style={{padding:"40px",minHeight:"calc(100dvh - 58px)",background:"#efe5d4"}}>
           <div style={{fontFamily:"'Nunito',sans-serif",fontSize:28,fontWeight:900,color:"#463a29",marginBottom:8}}>Friends</div>
