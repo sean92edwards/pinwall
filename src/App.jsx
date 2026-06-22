@@ -460,9 +460,9 @@ function HorizontalWall({session,muted}){
   },[items,view,vp,muted]);
 
   return(
-    <div style={{display:"flex",flexDirection:"column",height:"calc(100dvh - 44px)"}}>
-      <div className="wall-toolbar" style={{background:"#ffffff",borderBottom:"1px solid #e8e0d0",padding:"10px 20px",display:"flex",alignItems:"center",flexShrink:0,zIndex:90,position:"relative",boxShadow:"0 2px 8px rgba(120,80,30,0.08)"}}>
-        <div className="tb-pill" style={{margin:"0 auto",display:"flex",alignItems:"center",gap:2,background:"#f5f0e8",borderRadius:30,padding:5,border:"1px solid #e0d5c0",boxShadow:"0 2px 10px rgba(120,90,40,0.10)"}}>
+    <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{height:"calc(100dvh - 58px)",position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",background:"#c6a06a",backgroundImage:`radial-gradient(ellipse 120% 90% at 50% -5%,rgba(255,244,222,0.35) 0%,transparent 55%),radial-gradient(ellipse at 88% 108%,rgba(110,78,42,0.32) 0%,transparent 50%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='cork'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23cork)' opacity='0.4'/%3E%3C/svg%3E")`,backgroundSize:"100% 100%,100% 100%,150px 150px",userSelect:"none"}}>
+      <div className="wall-toolbar" style={{position:"absolute",top:12,left:"50%",transform:"translateX(-50%)",zIndex:90,display:"flex",alignItems:"center",gap:8}}>
+        <div className="tb-pill" style={{display:"flex",alignItems:"center",gap:2,background:"rgba(255,253,248,0.95)",borderRadius:30,padding:5,border:"1px solid #e0d5c0",boxShadow:"0 4px 16px rgba(0,0,0,0.15)",backdropFilter:"blur(8px)"}}>
           <div style={{position:"relative"}}>
             <button onClick={()=>setShowPhotoMenu(s=>!s)} className="tb-btn" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:showPhotoMenu?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:uploading?"default":"pointer",opacity:uploading?0.55:1}} onMouseEnter={e=>{if(!showPhotoMenu)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!showPhotoMenu)e.currentTarget.style.background="transparent";}}>
               <span style={{fontSize:15}}>{uploading?"⏳":"📷"}</span>{uploading?"Uploading�":"Photo"}
@@ -493,7 +493,7 @@ function HorizontalWall({session,muted}){
           <div style={{width:1,height:20,background:"#d8cdb8"}}/>
           <button onClick={()=>{setDoodling(d=>!d);if(doodling){setCurrentPath(null);setErasing(false);}}} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:doodling?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>{if(!doodling)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!doodling)e.currentTarget.style.background="transparent";}}><span style={{fontSize:15}}>✏️</span>Doodle</button>
         </div>
-        {doodling&&<div style={{position:"absolute",left:"50%",transform:"translateX(-50%)",top:52,display:"flex",gap:6,alignItems:"center",background:"rgba(0,0,0,0.8)",borderRadius:20,padding:"6px 12px",zIndex:200}}>
+        {doodling&&<div style={{position:"absolute",left:"50%",transform:"translateX(-50%)",top:56,display:"flex",gap:6,alignItems:"center",background:"rgba(0,0,0,0.8)",borderRadius:20,padding:"6px 12px",zIndex:200}}>
           {["#1a1a1a","#e63980","#e63946","#2a9d8f","#e9c46a","#457b9d","#ffffff"].map(c=><div key={c} onClick={()=>setDoodleColor(c)} style={{width:20,height:20,borderRadius:"50%",background:c,border:doodleColor===c?"2px solid #4a90e2":"2px solid rgba(255,255,255,0.3)",cursor:"pointer"}}/>)}
           <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
           {[2,4,8].map(w=><div key={w} onClick={()=>setDoodleWidth(w)} style={{width:24,height:24,borderRadius:"50%",background:doodleWidth===w?"rgba(255,255,255,0.2)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}><div style={{width:w*2,height:w*2,borderRadius:"50%",background:"white"}}/></div>)}
@@ -506,14 +506,13 @@ function HorizontalWall({session,muted}){
           <div style={{width:1,height:18,background:"rgba(255,255,255,0.2)",margin:"0 4px"}}/>
           <button onClick={()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'markertext',text:"",cx:c.x,cy:c.y,rot:0,color:doodleColorRef.current,scale:1,zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setDoodling(false);setEditing(true);setSelected(id);setEditingText(id);}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Permanent Marker',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Aa Text</button>
         </div>}
-        <div style={{position:"absolute",right:18,top:"50%",transform:"translateY(-50%)",display:"flex",gap:10,alignItems:"center",className:"edit-btn-desktop"}}>
+        <div style={{display:"flex",gap:10,alignItems:"center"}}>
           {editing&&<button onClick={()=>{const hv={x:view.x,y:view.y,zoom:view.zoom};setHomeView(hv);setHomeViewSet(true);localStorage.setItem('pinwall_home_view',JSON.stringify(hv));}} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,background:homeViewSet?"#2a9d8f":"rgba(44,38,32,0.7)",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{homeViewSet?"📍 Home set":"📍 Set home view"}</button>}
           {editing&&<label style={{display:"inline-flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:24,cursor:uploadingAudio?"default":"pointer",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,background:"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)",opacity:uploadingAudio?0.6:1}}>{uploadingAudio?"⏳":"🎵 Audio"}<input type="file" accept="audio/*" style={{display:"none"}} onChange={e=>{addAudio(e.target.files[0]);e.target.value='';}} disabled={uploadingAudio}/></label>}
           <button onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} className="tb-btn edit-wall-desktop" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,background:editing?"#2a9d8f":"#2c2620",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.14)"}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
         </div>
       </div>
-      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",background:"#c6a06a",backgroundImage:`radial-gradient(ellipse 120% 90% at 50% -5%,rgba(255,244,222,0.35) 0%,transparent 55%),radial-gradient(ellipse at 88% 108%,rgba(110,78,42,0.32) 0%,transparent 50%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='cork'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23cork)' opacity='0.4'/%3E%3C/svg%3E")`,backgroundSize:"100% 100%,100% 100%,150px 150px",userSelect:"none"}}>
-        <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 90px rgba(0,0,0,0.22)",pointerEvents:"none",zIndex:5}}/>
+      <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 90px rgba(0,0,0,0.22)",pointerEvents:"none",zIndex:5}}/>
         <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,pointerEvents:(doodling&&!erasing)?"none":"auto"}}>
           {sorted.map(item=>{
             const isSel=editing&&selected===item.id;
@@ -604,10 +603,9 @@ function HorizontalWall({session,muted}){
           <button onClick={()=>zoomBy(1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>+</button>
           <button onClick={resetView} style={{height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:11,fontWeight:700,fontFamily:"'Nunito',sans-serif",cursor:"pointer",padding:"0 12px"}}>Reset</button>
         </div>
-      </div>
-     {viewPhoto&&<div onClick={()=>setViewPhoto(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
+      {viewPhoto&&<div onClick={()=>setViewPhoto(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
   <img src={viewPhoto.url} style={{maxWidth:"90vw",maxHeight:"90vh",objectFit:"contain",boxShadow:"0 8px 60px rgba(0,0,0,0.6)"}} onClick={e=>e.stopPropagation()}/>
-  <div onClick={()=>setViewPhoto(null)} style={{position:"absolute",top:20,right:28,color:"white",fontSize:32,cursor:"pointer"}}>?</div>
+  <div onClick={()=>setViewPhoto(null)} style={{position:"absolute",top:20,right:28,color:"white",fontSize:32,cursor:"pointer"}}>✕</div>
 </div>}
     </div>
   );
@@ -752,7 +750,7 @@ function SharedWallView({items:initialItems,label}){
       </div>
       {viewPhoto&&<div onClick={()=>setViewPhoto(null)} style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,0.96)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
         <img src={viewPhoto.url} style={{maxWidth:"100vw",maxHeight:"100vh",objectFit:"contain",display:"block"}} alt={viewPhoto.caption||""}/>
-        <div onClick={()=>setViewPhoto(null)} style={{position:"absolute",top:20,right:28,color:"white",fontSize:32,cursor:"pointer",lineHeight:1,opacity:0.7}}>?</div>
+        <div onClick={()=>setViewPhoto(null)} style={{position:"absolute",top:20,right:28,color:"white",fontSize:32,cursor:"pointer",lineHeight:1,opacity:0.7}}>✕</div>
         {viewPhoto.caption&&<div style={{position:"absolute",bottom:24,left:"50%",transform:"translateX(-50%)",fontFamily:"'Caveat',cursive",fontSize:20,color:"rgba(255,255,255,0.75)"}}>{viewPhoto.caption}</div>}
       </div>}
     </div>
