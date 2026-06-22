@@ -460,7 +460,7 @@ function HorizontalWall({session,muted}){
   },[items,view,vp,muted]);
 
   return(
-    <div style={{height:"calc(100dvh - 58px)",position:"relative"}}>
+    <div style={{height:"calc(100dvh - 58px)",position:"relative",display:"flex",flexDirection:"column"}}>
       <div className="wall-toolbar" style={{position:"absolute",top:-50,left:"50%",transform:"translateX(-50%)",zIndex:200,display:"flex",alignItems:"center",gap:8}}>
         <div className="tb-pill" style={{display:"flex",alignItems:"center",gap:2,background:"transparent",borderRadius:30,padding:5}}>
           <div style={{position:"relative"}}>
