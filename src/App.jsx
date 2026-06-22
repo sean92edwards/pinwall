@@ -484,7 +484,7 @@ function HorizontalWall({session,muted}){
           </div>
           <div style={{width:1,height:20,background:"#d8cdb8"}}/>
           <div style={{position:"relative"}}>
-            <button onClick={()=>setShowNoteMenu(s=>!s)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:showNoteMenu?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>{if(!showNoteMenu)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!showNoteMenu)e.currentTarget.style.background="transparent";}}><span style={{fontSize:15}}>??</span>Note</button>
+            <button onClick={()=>setShowNoteMenu(s=>!s)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:showNoteMenu?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:"pointer"}} onMouseEnter={e=>{if(!showNoteMenu)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!showNoteMenu)e.currentTarget.style.background="transparent";}}><span style={{fontSize:15}}>📝</span>Note</button>
             {showNoteMenu&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:46,left:"50%",transform:"translateX(-50%)",background:"#fffdf8",border:"1px solid #ece1cf",borderRadius:12,padding:10,zIndex:200,boxShadow:"0 12px 36px rgba(80,60,20,0.22)",width:160}}>
               <button onClick={()=>{addBubble();setShowNoteMenu(false);}} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 10px",border:"none",background:"transparent",borderRadius:8,fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,color:"#3a3327",cursor:"pointer",textAlign:"left"}} onMouseEnter={e=>e.currentTarget.style.background="#f3ecdf"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>📝 Sticky Note</button>
               <button onClick={()=>{addSpeechBubble();setShowNoteMenu(false);}} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"8px 10px",border:"none",background:"transparent",borderRadius:8,fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,color:"#3a3327",cursor:"pointer",textAlign:"left"}} onMouseEnter={e=>e.currentTarget.style.background="#f3ecdf"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>💬 Speech Bubble</button>
@@ -914,13 +914,10 @@ export default function Pinwall(){
           <span style={{fontSize:22,lineHeight:1}}>📌</span>
           <span className="logo-text" style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:22,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:2}}>
-          {[["wall","📌","My Wall"]].map(([v,icon,label])=>(
-            <button key={v} onClick={()=>{setView(v);}} style={{background:"none",color:view===v?"#1a1a1a":"#888",border:"none",borderRadius:20,padding:"6px 12px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer",borderBottom:view===v?"2px solid #1a1a1a":"2px solid transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:1,lineHeight:1}}><span style={{fontSize:16}}>{icon}</span><span className="nav-label" style={{fontSize:10}}>{label}</span></button>
-          ))}
-        </div>
+        <div style={{flex:1}}></div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <button onClick={()=>setMuted(m=>!m)} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:muted?"#e63946":"rgba(0,0,0,0.06)",color:muted?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>{muted?"🔇":"🔊"}</button>
+          <button onClick={()=>setView("wall")} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:view==="wall"?"#2a9d8f":"rgba(0,0,0,0.06)",color:view==="wall"?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>📌</button>
           <button onClick={()=>setView("friends")} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:view==="friends"?"#2a9d8f":"rgba(0,0,0,0.06)",color:view==="friends"?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>👥</button>
           <button onClick={copyShareLink} style={{display:"inline-flex",alignItems:"center",gap:4,background:shareCopied?"#2a9d8f":"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"6px 12px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>
             {shareCopied?"✓":"🔗"}
