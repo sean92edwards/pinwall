@@ -29,7 +29,7 @@ const INITIAL_ITEMS=[
 function hdl(pos){const b={position:"absolute",zIndex:10,background:"#4a90e2",cursor:"grab",display:"flex",alignItems:"center",justifyContent:"center",color:"white",boxShadow:"0 1px 6px rgba(0,0,0,0.3)",border:"2px solid white"};if(pos==="top")return{...b,top:-30,left:"50%",transform:"translateX(-50%)",width:24,height:24,borderRadius:"50%",fontSize:14};if(pos==="br")return{...b,bottom:-5,right:-5,width:20,height:20,borderRadius:5,fontSize:11,cursor:"se-resize"};}
 const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
 
-function HorizontalWall({session,muted,editing,setEditing}){
+function HorizontalWall({session,muted,editing,setEditing,username}){
   const [items,setItems]=useState([]);
   const [selected,setSelected]=useState(null);
   const [editingText,setEditingText]=useState(null);
@@ -43,6 +43,8 @@ function HorizontalWall({session,muted,editing,setEditing}){
   const [uploadingAudio,setUploadingAudio]=useState(false);
   const [cuttingOut,setCuttingOut]=useState(false);
   const [viewPhoto,setViewPhoto]=useState(null);
+  const [photoComments,setPhotoComments]=useState([]);
+  const [commentText,setCommentText]=useState("");
   const [doodling,setDoodling]=useState(false);
   const [erasing,setErasing]=useState(false);
   const [doodleColor,setDoodleColor]=useState("#1a1a1a");
@@ -159,6 +161,22 @@ function HorizontalWall({session,muted,editing,setEditing}){
 
   const rectOf=()=>viewportRef.current?.getBoundingClientRect();
   const centerWorld=()=>{const v=viewRef.current;return{x:(vp.w/2-v.x)/v.zoom,y:(vp.h/2-v.y)/v.zoom};};
+
+  // Load comments when viewing a photo
+  useEffect(()=>{
+    if(!viewPhoto||!session?.user)return;
+    supabase.from('photo_comments').select('*').eq('wall_owner_id',session.user.id).eq('photo_id',viewPhoto.id).order('created_at',{ascending:true}).then(({data})=>{
+      setPhotoComments(data||[]);
+    });
+  },[viewPhoto]);
+
+  const postComment=async()=>{
+    if(!commentText.trim()||!viewPhoto||!session?.user||!username)return;
+    const{data,error}=await supabase.from('photo_comments').insert({wall_owner_id:session.user.id,photo_id:viewPhoto.id,author_id:session.user.id,author_name:username,text:commentText.trim()}).select().single();
+    if(error){console.error(error);return;}
+    if(data)setPhotoComments(prev=>[...prev,data]);
+    setCommentText("");
+  };
 
   const bringToFront=id=>{const z=maxZ+1;setMaxZ(z);setItems(p=>p.map(i=>i.id===id?{...i,zIndex:z}:i));return z;};
 
@@ -605,10 +623,29 @@ function HorizontalWall({session,muted,editing,setEditing}){
           <button onClick={resetView} style={{height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:11,fontWeight:700,fontFamily:"'Nunito',sans-serif",cursor:"pointer",padding:"0 12px"}}>Reset</button>
         </div>
       </div>
-      {viewPhoto&&<div onClick={()=>setViewPhoto(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
-  <img src={viewPhoto.url} style={{maxWidth:"90vw",maxHeight:"90vh",objectFit:"contain",boxShadow:"0 8px 60px rgba(0,0,0,0.6)"}} onClick={e=>e.stopPropagation()}/>
-  <div onClick={()=>setViewPhoto(null)} style={{position:"absolute",top:20,right:28,color:"white",fontSize:32,cursor:"pointer"}}>✕</div>
-</div>}
+      {viewPhoto&&<div onClick={()=>{setViewPhoto(null);setPhotoComments([]);setCommentText("");}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1000,display:"flex",alignItems:"stretch"}}>
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
+          <img src={viewPhoto.url} style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",padding:20}} onClick={e=>e.stopPropagation()} alt=""/>
+        </div>
+        <div onClick={e=>e.stopPropagation()} style={{width:300,background:"#fff",display:"flex",flexDirection:"column",cursor:"default"}}>
+          <div style={{padding:"16px",borderBottom:"1px solid #eee",fontFamily:"'Nunito',sans-serif",fontSize:14,fontWeight:800}}>Comments</div>
+          <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
+            {photoComments.length===0&&<div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#999",textAlign:"center",padding:"30px 0"}}>No comments yet</div>}
+            {photoComments.map(c=>(
+              <div key={c.id} style={{marginBottom:12}}>
+                <div style={{fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,color:"#2a2118"}}>@{c.author_name}</div>
+                <div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#555",marginTop:2}}>{c.text}</div>
+                <div style={{fontFamily:"'Nunito',sans-serif",fontSize:9,color:"#bbb",marginTop:2}}>{new Date(c.created_at).toLocaleDateString()}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{padding:"12px 16px",borderTop:"1px solid #eee",display:"flex",gap:6}}>
+            <input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')postComment();}} placeholder="Write a comment..." style={{flex:1,padding:"8px 10px",border:"1px solid #ddd",borderRadius:8,fontFamily:"'Nunito',sans-serif",fontSize:12,outline:"none"}}/>
+            <button onClick={postComment} style={{background:"#1a1a1a",color:"#fff",border:"none",borderRadius:8,padding:"8px 12px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>Post</button>
+          </div>
+        </div>
+        <div onClick={()=>{setViewPhoto(null);setPhotoComments([]);setCommentText("");}} style={{position:"absolute",top:20,right:320,color:"white",fontSize:32,cursor:"pointer"}}>✕</div>
+      </div>}
     </div>
   );
 }
@@ -942,7 +979,7 @@ export default function Pinwall(){
           <div onClick={()=>supabase.auth.signOut()} style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:13,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
         </div>
       </div>
-      <HorizontalWall session={session} muted={muted} editing={editing} setEditing={setEditing}/>
+      <HorizontalWall session={session} muted={muted} editing={editing} setEditing={setEditing} username={username}/>
       {viewingFriend&&(
         <div style={{position:"fixed",inset:0,zIndex:200,display:"flex",flexDirection:"column",background:"#fff"}}>
           <div style={{background:"#fff",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #e8e2d8",flexShrink:0}}>
