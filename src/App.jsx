@@ -766,6 +766,7 @@ export default function Pinwall(){
   const [shareCopied,setShareCopied]=useState(false);
   const [muted,setMuted]=useState(false);
   const [editing,setEditing]=useState(false);
+  const [showFriendsPanel,setShowFriendsPanel]=useState(false);
   const [sharedView,setSharedView]=useState(null);
   const [friends,setFriends]=useState([]);
   const [viewingFriend,setViewingFriend]=useState(null);
@@ -919,55 +920,30 @@ export default function Pinwall(){
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <button onClick={()=>setEditing(e=>!e)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:30,height:30,borderRadius:"50%",border:"none",cursor:"pointer",fontSize:14,background:editing?"#2a9d8f":"rgba(0,0,0,0.06)",color:editing?"#fff":"#888"}}>{editing?"✓":"✏️"}</button>
           <button onClick={()=>setMuted(m=>!m)} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:muted?"#e63946":"rgba(0,0,0,0.06)",color:muted?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>{muted?"🔇":"🔊"}</button>
-          <button onClick={()=>setView("wall")} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:view==="wall"?"#2a9d8f":"rgba(0,0,0,0.06)",color:view==="wall"?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>📌</button>
-          <button onClick={()=>setView("friends")} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:view==="friends"?"#2a9d8f":"rgba(0,0,0,0.06)",color:view==="friends"?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>👥</button>
+          <div style={{position:"relative"}}>
+            <button onClick={()=>setShowFriendsPanel(s=>!s)} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:showFriendsPanel?"#2a9d8f":"rgba(0,0,0,0.06)",color:showFriendsPanel?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>👥</button>
+            {showFriendsPanel&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:40,right:0,width:320,maxHeight:420,background:"#fff",borderRadius:12,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",border:"1px solid #e8e2d8",zIndex:300,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+              <div style={{padding:"14px 16px",borderBottom:"1px solid #eee"}}>
+                <div style={{fontFamily:"'Nunito',sans-serif",fontSize:15,fontWeight:800,color:"#1a1a1a",marginBottom:8}}>Friends</div>
+                <div style={{display:"flex",gap:6}}>
+                  <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')searchUsers();}} placeholder="Search username..." style={{flex:1,padding:"7px 10px",border:"1px solid #ddd",borderRadius:8,fontFamily:"'Nunito',sans-serif",fontSize:12,outline:"none"}}/>
+                  <button onClick={searchUsers} disabled={searching} style={{background:"#1a1a1a",color:"#fff",border:"none",borderRadius:8,padding:"7px 12px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer",opacity:searching?0.6:1}}>Go</button>
+                </div>
+              </div>
+              <div style={{flex:1,overflowY:"auto",padding:"10px 16px"}}>
+                {searchResults.length>0&&<div style={{marginBottom:12}}>{searchResults.map(r=>(<div key={r.user_id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid #f0f0f0"}}><span style={{fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700}}>@{r.username}</span><button onClick={()=>addFriendFromSearch(r.user_id,r.username,r.token_id)} style={{background:"#2a9d8f",color:"#fff",border:"none",borderRadius:12,padding:"4px 10px",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Add</button></div>))}</div>}
+                {friends.length===0&&searchResults.length===0&&<div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#999",textAlign:"center",padding:"20px 0"}}>No friends yet</div>}
+                {friends.map(f=>(<div key={f.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #f5f5f5"}}><span style={{fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700}}>@{f.nickname}</span><div style={{display:"flex",gap:4}}><button onClick={()=>{viewFriendWall(f.friend_token,f.nickname);setShowFriendsPanel(false);}} style={{background:"#2a9d8f",color:"#fff",border:"none",borderRadius:10,padding:"4px 8px",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>View</button><button onClick={()=>removeFriend(f.id)} style={{background:"none",border:"1px solid #ddd",borderRadius:10,padding:"4px 6px",fontSize:10,color:"#999",cursor:"pointer"}}>x</button></div></div>))}
+              </div>
+              <div style={{padding:"10px 16px",borderTop:"1px solid #eee"}}>
+                <button onClick={copyShareLink} style={{width:"100%",background:"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"8px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>{shareCopied?"Copied!":"Copy share link"}</button>
+              </div>
+            </div>}
+          </div>
           <div onClick={()=>supabase.auth.signOut()} style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:12,cursor:"pointer"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
         </div>
       </div>
-      {view==="wall"&&<HorizontalWall session={session} muted={muted} editing={editing} setEditing={setEditing}/>}
-      {view==="friends"&&(
-        <div style={{padding:"40px",minHeight:"calc(100dvh - 58px)",background:"#efe5d4"}}>
-          <div style={{fontFamily:"'Nunito',sans-serif",fontSize:28,fontWeight:900,color:"#463a29",marginBottom:8}}>Friends</div>
-          <div style={{fontFamily:"'Nunito',sans-serif",fontSize:13,color:"#a99878",marginBottom:24}}>Find friends by username or share your link.</div>
-          
-          <div style={{display:"flex",gap:8,marginBottom:24,maxWidth:400}}>
-            <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')searchUsers();}} placeholder="Search by username..." style={{flex:1,padding:"10px 14px",border:"2px solid #ddd",borderRadius:8,fontFamily:"'Nunito',sans-serif",fontSize:14,outline:"none"}}/>
-            <button onClick={searchUsers} disabled={searching} style={{background:"#1a1a1a",color:"#fff",border:"none",borderRadius:8,padding:"10px 18px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer",opacity:searching?0.6:1}}>{searching?"...":"Search"}</button>
-          </div>
-
-          {searchResults.length>0&&<div style={{marginBottom:28}}>
-            <div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,color:"#a99878",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.1em"}}>Results</div>
-            <div style={{display:"flex",flexDirection:"column",gap:8,maxWidth:400}}>
-              {searchResults.map(r=>(
-                <div key={r.user_id} style={{background:"#fff",borderRadius:8,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
-                  <span style={{fontFamily:"'Nunito',sans-serif",fontSize:14,fontWeight:700,color:"#2a2118"}}>@{r.username}</span>
-                  <button onClick={()=>addFriendFromSearch(r.user_id,r.username,r.token_id)} style={{background:"#2a9d8f",color:"#fff",border:"none",borderRadius:16,padding:"6px 14px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>Add</button>
-                </div>
-              ))}
-            </div>
-          </div>}
-
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:32}}>
-            <button onClick={copyShareLink} style={{background:"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"8px 18px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer"}}>{shareCopied?"? Copied!":"?? Copy my share link"}</button>
-            {username&&<span style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#a99878"}}>Your username: <strong>@{username}</strong></span>}
-          </div>
-
-          {friends.length===0?<div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#999",padding:"40px 0",textAlign:"center"}}>No friends added yet. Search for someone or share your link!</div>:(
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:16}}>
-              {friends.map(f=>(
-                <div key={f.id} style={{background:"#fff",borderRadius:12,padding:"16px",boxShadow:"0 2px 12px rgba(0,0,0,0.08)",display:"flex",flexDirection:"column",gap:10}}>
-                  <div style={{fontFamily:"'Nunito',sans-serif",fontSize:16,fontWeight:700,color:"#2a2118"}}>@{f.nickname}</div>
-                  <div style={{fontFamily:"'Nunito',sans-serif",fontSize:10,color:"#bbb"}}>Added {new Date(f.added_at).toLocaleDateString()}</div>
-                  <div style={{display:"flex",gap:6,marginTop:"auto"}}>
-                    <button onClick={()=>viewFriendWall(f.friend_token,f.nickname)} style={{flex:1,background:"#2a9d8f",color:"#fff",border:"none",borderRadius:16,padding:"7px 0",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>View wall</button>
-                    <button onClick={()=>removeFriend(f.id)} style={{background:"none",border:"1px solid #ddd",borderRadius:16,padding:"7px 10px",fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#999",cursor:"pointer"}}>?</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <HorizontalWall session={session} muted={muted} editing={editing} setEditing={setEditing}/>
       {viewingFriend&&(
         <div style={{position:"fixed",inset:0,zIndex:200,display:"flex",flexDirection:"column",background:"#fff"}}>
           <div style={{background:"#fff",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid #e8e2d8",flexShrink:0}}>
