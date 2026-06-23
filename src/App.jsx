@@ -921,9 +921,6 @@ export default function Pinwall(){
           <button onClick={()=>setMuted(m=>!m)} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:muted?"#e63946":"rgba(0,0,0,0.06)",color:muted?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>{muted?"🔇":"🔊"}</button>
           <button onClick={()=>setView("wall")} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:view==="wall"?"#2a9d8f":"rgba(0,0,0,0.06)",color:view==="wall"?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>📌</button>
           <button onClick={()=>setView("friends")} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:view==="friends"?"#2a9d8f":"rgba(0,0,0,0.06)",color:view==="friends"?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>👥</button>
-          <button onClick={copyShareLink} style={{display:"inline-flex",alignItems:"center",gap:4,background:shareCopied?"#2a9d8f":"#1a1a1a",color:"#fff",border:"none",borderRadius:20,padding:"6px 12px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-            {shareCopied?"✓":"🔗"}
-          </button>
           <div onClick={()=>supabase.auth.signOut()} style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:12,cursor:"pointer"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
         </div>
       </div>
