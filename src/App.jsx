@@ -460,7 +460,7 @@ function HorizontalWall({session,muted,editing,setEditing}){
   },[items,view,vp,muted]);
 
   return(
-    <div style={{height:"calc(100dvh - 58px)",position:"relative",display:"flex",flexDirection:"column"}}>
+    <div style={{height:"100dvh",position:"relative",display:"flex",flexDirection:"column"}}>
       {homeToast&&<div style={{position:"absolute",bottom:80,left:"50%",transform:"translateX(-50%)",zIndex:300,background:"rgba(0,0,0,0.8)",color:"#fff",borderRadius:20,padding:"8px 18px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,animation:"slideUp 0.2s ease"}}>Home view set ✓</div>}
       {editing&&<div className="wall-toolbar" style={{position:"absolute",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:200,display:"flex",alignItems:"center",gap:8,animation:"slideUp 0.2s ease"}}>
         <div className="tb-pill" style={{display:"flex",alignItems:"center",gap:2,background:"rgba(255,253,248,0.97)",borderRadius:30,padding:6,border:"1px solid #e0d5c0",boxShadow:"0 4px 20px rgba(0,0,0,0.18)",backdropFilter:"blur(8px)"}}>
@@ -911,18 +911,17 @@ export default function Pinwall(){
   return(
     <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:44px!important;padding:0 10px!important}.pinwall-nav .logo-text{font-size:18px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:11px!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.edit-wall-desktop{display:none!important}.edit-wall-mobile{display:inline-flex!important}}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
-      <div className="pinwall-nav" style={{background:"#ffffff",borderBottom:"1px solid #e8e2d8",padding:"0 24px",display:"flex",alignItems:"center",justifyContent:"space-between",height:58,position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:22,lineHeight:1}}>📌</span>
-          <span className="logo-text" style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:22,letterSpacing:"-0.02em",color:"#1a1a1a"}}>Pinwall</span>
+      <div className="pinwall-nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
+          <span style={{fontSize:22,lineHeight:1,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>📌</span>
+          <span className="logo-text" style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:22,letterSpacing:"-0.02em",color:"#fff",textShadow:"0 2px 6px rgba(0,0,0,0.4)"}}>Pinwall</span>
         </div>
-        <div style={{flex:1}}></div>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <button onClick={()=>setEditing(e=>!e)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:30,height:30,borderRadius:"50%",border:"none",cursor:"pointer",fontSize:14,background:editing?"#2a9d8f":"rgba(0,0,0,0.06)",color:editing?"#fff":"#888"}}>{editing?"✓":"✏️"}</button>
-          <button onClick={()=>setMuted(m=>!m)} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:muted?"#e63946":"rgba(0,0,0,0.06)",color:muted?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>{muted?"🔇":"🔊"}</button>
+        <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
+          <button onClick={()=>setEditing(e=>!e)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontSize:12,fontFamily:"'Nunito',sans-serif",fontWeight:700,background:editing?"#2a9d8f":"rgba(30,30,30,0.85)",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.3)",gap:6}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
+          <button onClick={()=>setMuted(m=>!m)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:36,height:36,borderRadius:"50%",border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:15,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>{muted?"🔇":"🔊"}</button>
           <div style={{position:"relative"}}>
-            <button onClick={()=>setShowFriendsPanel(s=>!s)} style={{display:"inline-flex",alignItems:"center",width:30,height:30,borderRadius:"50%",border:"none",background:showFriendsPanel?"#2a9d8f":"rgba(0,0,0,0.06)",color:showFriendsPanel?"#fff":"#888",fontSize:14,cursor:"pointer",justifyContent:"center"}}>👥</button>
-            {showFriendsPanel&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:40,right:0,width:320,maxHeight:420,background:"#fff",borderRadius:12,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",border:"1px solid #e8e2d8",zIndex:300,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+            <button onClick={()=>setShowFriendsPanel(s=>!s)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:36,height:36,borderRadius:"50%",border:"none",background:showFriendsPanel?"#2a9d8f":"rgba(30,30,30,0.7)",color:"#fff",fontSize:15,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>👥</button>
+            {showFriendsPanel&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:44,right:0,width:320,maxHeight:420,background:"#fff",borderRadius:12,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",border:"1px solid #e8e2d8",zIndex:300,overflow:"hidden",display:"flex",flexDirection:"column"}}>
               <div style={{padding:"14px 16px",borderBottom:"1px solid #eee"}}>
                 <div style={{fontFamily:"'Nunito',sans-serif",fontSize:15,fontWeight:800,color:"#1a1a1a",marginBottom:8}}>Friends</div>
                 <div style={{display:"flex",gap:6}}>
@@ -940,7 +939,7 @@ export default function Pinwall(){
               </div>
             </div>}
           </div>
-          <div onClick={()=>supabase.auth.signOut()} style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:12,cursor:"pointer"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
+          <div onClick={()=>supabase.auth.signOut()} style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:13,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
         </div>
       </div>
       <HorizontalWall session={session} muted={muted} editing={editing} setEditing={setEditing}/>
