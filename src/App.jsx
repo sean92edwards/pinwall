@@ -441,7 +441,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const margin=300;
   const wL=(0-view.x)/zoom-margin,wT=(0-view.y)/zoom-margin;
   const wR=(vp.w-view.x)/zoom+margin,wB=(vp.h-view.y)/zoom+margin;
-  const itemHalf=it=>{if(it.type==='sticker')return(it.size||44);if(it.type==='bubble')return 170;return Math.max(it.w||148,it.h||148);};
+  const itemHalf=it=>{if(it.type==='sticker')return(it.size||44);if(it.type==='bubble')return 170;if(it.type==='markertext'||it.type==='doodle')return 9999;return Math.max(it.w||148,it.h||148);};
   const visible=items.filter(it=>{const h=itemHalf(it);return it.cx+h>=wL&&it.cx-h<=wR&&it.cy+h>=wT&&it.cy-h<=wB;});
   const sorted=[...visible].sort((a,b)=>(a.zIndex||1)-(b.zIndex||1));
 
