@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
 import Auth from "./Auth";
 import { removeBackground } from "@imgly/background-removal";
@@ -614,7 +614,6 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
         {currentPath&&<svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:8,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
           <path d={currentPath} fill="none" stroke={doodleColor} strokeWidth={doodleWidth*1.5/view.zoom} strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
         </svg>}
-        <button className="edit-wall-mobile" onClick={()=>{setEditing(e=>!e);setSelected(null);setEditingText(null);setShowStickers(false);}} style={{position:"absolute",top:12,right:12,zIndex:60,display:"none",alignItems:"center",gap:6,padding:"8px 14px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,background:editing?"#2a9d8f":"rgba(44,38,32,0.85)",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.3)"}}>{editing?"✓ Done":"✏️ Edit"}</button>
         <div className="wall-hint" style={{position:"absolute",left:16,bottom:14,zIndex:60,fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.04em",color:"rgba(255,255,255,0.55)",pointerEvents:"none"}}>{doodling?"Draw on the board":"drag to pan � scroll to zoom � Shift + scroll to pan"}</div>
         <div className="zoom-controls" style={{position:"absolute",right:16,bottom:16,zIndex:60,display:"flex",alignItems:"center",gap:6}}>
           <button onClick={()=>zoomBy(1/1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>-</button>
@@ -947,7 +946,7 @@ export default function Pinwall(){
 
   return(
     <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:44px!important;padding:0 10px!important}.pinwall-nav .logo-text{font-size:18px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:11px!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.edit-wall-desktop{display:none!important}.edit-wall-mobile{display:inline-flex!important}}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:44px!important;padding:0 10px!important}.pinwall-nav .logo-text{font-size:18px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:11px!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
       <div className="pinwall-nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
         <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
           <span style={{fontSize:22,lineHeight:1,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>📌</span>
