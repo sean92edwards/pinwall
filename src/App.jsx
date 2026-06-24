@@ -540,7 +540,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
               return null; // Audio rendered separately on top
             }
             if(lod==='low'){
-              if(item.type==='doodle')return null; // doodles rendered in SVG layer
+              if(item.type==='doodle'||item.type==='markertext')return null; // rendered separately
               const w=item.type==='sticker'?(item.size||44):(item.type==='bubble'?150*(item.scale||1):(item.w||148));
               const h=item.type==='sticker'?(item.size||44):(item.type==='bubble'?70*(item.scale||1):(item.h||148));
               const col=item.type==='photo'||item.type==='cutout'?(item.dominantColor||"#d8cdb8"):(item.type==='sticker'?"#e6c25c":(item.color||"#ffffff"));
