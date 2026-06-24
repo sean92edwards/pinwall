@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
 import Auth from "./Auth";
 import { removeBackground } from "@imgly/background-removal";
@@ -573,11 +573,14 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
               </div>
               {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div>{item.type==='photo'&&item.url&&<div onClick={e=>{e.stopPropagation();cutOutPhoto(item);}} style={{position:"absolute",top:-10,left:-10,height:20,borderRadius:10,background:cuttingOut?"#888":"#2a9d8f",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",cursor:cuttingOut?"default":"pointer",zIndex:10,padding:"0 8px",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>{cuttingOut?"u{23F3}":"✂️ Cut"}</div>}<div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
             </div>);}
-            if(item.type==='doodle'){return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:erasing?"crosshair":(editing?"grab":"default"),userSelect:"none"}} onMouseDown={e=>{if(!erasing)startDrag(e,item.id);}} onTouchStart={e=>{if(!erasing)startDrag(e,item.id);}} onClick={e=>{e.stopPropagation();if(erasing){setItems(p=>p.filter(i=>i.id!==item.id));}else if(editing){setSelected(item.id);}}}>
-              <svg width={item.w} height={item.h} viewBox={`0 0 ${item.w} ${item.h}`} style={{overflow:"visible",display:"block"}}>
-                <path d={item.path} fill="none" stroke={item.color||"#e63946"} strokeWidth={(item.strokeWidth||3)*1.5} strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
-              </svg>
-              {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div><div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
+            if(item.type==='doodle'){
+              if(!isSel){
+                // Render as path only (no bounding box) - handled in doodle layer below
+                return null;
+              }
+              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:erasing?"crosshair":(editing?"grab":"default"),userSelect:"none",width:item.w,height:item.h}} onMouseDown={e=>{if(!erasing)startDrag(e,item.id);}} onTouchStart={e=>{if(!erasing)startDrag(e,item.id);}} onClick={e=>{e.stopPropagation();if(erasing){setItems(p=>p.filter(i=>i.id!==item.id));}else if(editing){setSelected(item.id);}}}>
+              <div style={{position:"absolute",inset:-4,border:"1.5px dashed rgba(74,144,226,0.6)",borderRadius:4,pointerEvents:"none"}}/>
+              <div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div><div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div>
             </div>);}
             if(item.type==='cutout'){return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"pointer",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}else if(item.url){setViewPhoto(item);}}} onMouseEnter={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${(item.rot||0)*0.3}deg) scale(1.06)`;e.currentTarget.style.zIndex=99;}}} onMouseLeave={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(1)`;e.currentTarget.style.zIndex=item.zIndex;}}}>
               <img src={item.url} style={{width:item.w||200,height:item.h||200,objectFit:"cover",display:"block",borderRadius:4,filter:"drop-shadow(2px 4px 8px rgba(0,0,0,0.3))"}} alt=""/>
@@ -593,6 +596,11 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             return null;
           })}
         </div>
+        <svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:erasing?"auto":"none",zIndex:6,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
+          {items.filter(i=>i.type==='doodle').map(item=>(
+            <path key={item.id} d={item.path} fill="none" stroke={item.color||"#1a1a1a"} strokeWidth={(item.strokeWidth||3)*1.5} strokeLinecap="round" strokeLinejoin="round" opacity="0.9" transform={`translate(${item.cx-item.w/2},${item.cy-item.h/2})`} onClick={erasing?()=>setItems(p=>p.filter(i=>i.id!==item.id)):undefined} style={{cursor:erasing?"crosshair":"default",pointerEvents:erasing?"auto":"none"}}/>
+          ))}
+        </svg>
         {editing&&<div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,zIndex:9,pointerEvents:"auto"}}>
           {items.filter(i=>i.type==='audio').map(item=>{
             const isSel=editing&&selected===item.id;
