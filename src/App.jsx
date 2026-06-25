@@ -69,6 +69,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const clearedDoodles=useRef([]);
   const [vp,setVp]=useState({w:1200,h:700});
   const [showZoom,setShowZoom]=useState(true);
+  const [audioUnlocked,setAudioUnlocked]=useState(false);
   const zoomTimeout=useRef(null);
   const dragStart=useRef(null);
   const panStart=useRef(null);
@@ -657,6 +658,11 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
           <button onClick={resetView} style={{height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:11,fontWeight:700,fontFamily:"'Nunito',sans-serif",cursor:"pointer",padding:"0 12px"}}>Reset</button>
         </div>
       </div>
+      {!audioUnlocked&&items.some(i=>i.type==='audio')&&<div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",zIndex:500,background:"rgba(0,0,0,0.85)",borderRadius:16,padding:"20px 28px",textAlign:"center",cursor:"pointer",boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}} onClick={()=>{setAudioUnlocked(true);const a=new Audio();a.src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";a.play().catch(()=>{});}}>
+        <div style={{fontSize:28,marginBottom:8}}>🔊</div>
+        <div style={{fontFamily:"'Nunito',sans-serif",fontSize:14,fontWeight:700,color:"#fff"}}>Tap to activate audio</div>
+        <div style={{fontFamily:"'Nunito',sans-serif",fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:4}}>This wall has sound</div>
+      </div>}
       {viewPhoto&&<div className="photo-modal" onClick={()=>{setViewPhoto(null);setPhotoComments([]);setCommentText("");}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1000,display:"flex",alignItems:"stretch"}}>
         <div className="photo-modal-img" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
           <img src={viewPhoto.url} style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",padding:20}} onClick={e=>e.stopPropagation()} alt=""/>
