@@ -1,0 +1,9 @@
+{
+  "appId": "app.pinwall.ios",
+  "appName": "Pinwall",
+  "webDir": "dist",
+  "server": {
+    "url": "https://pinwall.vercel.app",
+    "cleartext": false
+  }
+}
