@@ -30,14 +30,10 @@ function hdl(pos){const b={position:"absolute",zIndex:10,background:"#4a90e2",cu
 const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
 
 function HorizontalWall({session,muted,editing,setEditing,username}){
-  const DEMO_ITEMS=[
-    {id:1,type:'bubble',text:"Welcome to Pinwall!\nTry adding photos, notes\nand doodles",cx:400,cy:280,rot:-2,color:"#ffb6c8",w:160,h:100,zIndex:1},
-    {id:2,type:'sticker',emoji:"\u{1F389}",cx:250,cy:150,rot:12,size:60,zIndex:2},
-    {id:3,type:'sticker',emoji:"\u{1F4F7}",cx:620,cy:180,rot:-8,size:50,zIndex:3},
-    {id:4,type:'markertext',text:"Your memories here",cx:400,cy:450,rot:0,color:"#1a1a1a",scale:1.2,zIndex:4},
-    {id:5,type:'sticker',emoji:"\u2B50",cx:550,cy:380,rot:15,size:44,zIndex:5},
-  ];
-  const [items,setItems]=useState(session?[]:[...DEMO_ITEMS]);
+  const [items,setItems]=useState(session?[]:[]);
+  useEffect(()=>{
+    if(!session){fetch('/demo-wall.json').then(r=>r.json()).then(data=>{if(data?.length)setItems(data);}).catch(()=>{});}
+  },[]);
   const [selected,setSelected]=useState(null);
   const [editingText,setEditingText]=useState(null);
   const [editingCaption,setEditingCaption]=useState(null);
