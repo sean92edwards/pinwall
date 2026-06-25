@@ -459,6 +459,28 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
 
   // Audio proximity playback
   const audioRefs=useRef({});
+  const audioFade=useRef(1);
+  const audioFadeInterval=useRef(null);
+  useEffect(()=>{
+    if(view.zoom<0.25){
+      // Start fading out over 2 seconds if not already
+      if(!audioFadeInterval.current&&audioFade.current>0){
+        audioFadeInterval.current=setInterval(()=>{
+          audioFade.current=Math.max(0,audioFade.current-0.05);
+          // Update volumes during fade
+          Object.values(audioRefs.current).forEach(a=>{
+            if(a._targetVol!==undefined) a.volume=a._targetVol*audioFade.current;
+            if(audioFade.current===0&&!a.paused) a.pause();
+          });
+          if(audioFade.current<=0){clearInterval(audioFadeInterval.current);audioFadeInterval.current=null;}
+        },100);
+      }
+    } else {
+      // Restore immediately
+      if(audioFadeInterval.current){clearInterval(audioFadeInterval.current);audioFadeInterval.current=null;}
+      audioFade.current=1;
+    }
+  },[view.zoom]);
   useEffect(()=>{
     const audioItems=items.filter(i=>i.type==='audio'&&i.url);
     const centerX=(vp.w/2-view.x)/view.zoom;
@@ -467,17 +489,19 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       const dist=Math.hypot(item.cx-centerX,item.cy-centerY);
       const range=item.range||600;
       const t=Math.max(0,Math.min(1,1-dist/range));
-      const zoomFade=view.zoom>=0.25?1:Math.max(0,view.zoom/0.25);
-      const vol=muted?0:t*t*zoomFade;
+      const baseVol=muted?0:t*t;
+      const vol=baseVol*audioFade.current;
       if(!audioRefs.current[item.id]){
         const a=new Audio(item.url);
         a.loop=!!item.loop;
         a.volume=vol;
+        a._targetVol=baseVol;
         if(vol>0)a.play().catch(()=>{});
         audioRefs.current[item.id]=a;
       } else {
         const a=audioRefs.current[item.id];
         a.loop=!!item.loop;
+        a._targetVol=baseVol;
         a.volume=vol;
         if(vol>0&&a.paused)a.play().catch(()=>{});
         if(vol===0&&!a.paused)a.pause();
