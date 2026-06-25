@@ -959,10 +959,11 @@ export default function Pinwall(){
             <span style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:22,letterSpacing:"-0.02em",color:"#fff",textShadow:"0 2px 6px rgba(0,0,0,0.4)"}}>Pinwall Demo</span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
+            <button onClick={()=>setEditing(e=>!e)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:36,height:36,borderRadius:"50%",border:"none",cursor:"pointer",fontSize:14,background:editing?"#2a9d8f":"rgba(30,30,30,0.7)",color:"#fff",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>{editing?"✓":"✏️"}</button>
             <button onClick={()=>setDemoMode(false)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,background:"rgba(30,30,30,0.85)",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.3)"}}>Sign up to save</button>
           </div>
         </div>
-        <HorizontalWall session={null} muted={false} editing={true} setEditing={()=>{}} username="demo"/>
+        <HorizontalWall session={null} muted={false} editing={editing} setEditing={setEditing} username="demo"/>
       </div>
     );
   }
@@ -1013,6 +1014,7 @@ export default function Pinwall(){
             </div>}
           </div>
           <div onClick={()=>supabase.auth.signOut()} style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:13,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
+          {session.user.email==='sean92edwards@gmail.com'&&<button onClick={async()=>{const{data}=await supabase.from('walls').select('items').eq('user_id',session.user.id).single();if(data?.items){await navigator.clipboard.writeText(JSON.stringify(data.items));alert('Demo items copied to clipboard! ('+data.items.length+' items)');}}} style={{display:"inline-flex",alignItems:"center",padding:"6px 10px",borderRadius:16,border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,cursor:"pointer"}}>Export demo</button>}
         </div>
       </div>
       <HorizontalWall session={session} muted={muted} editing={editing} setEditing={setEditing} username={username}/>
