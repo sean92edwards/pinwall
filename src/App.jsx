@@ -457,7 +457,8 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     audioItems.forEach(item=>{
       const dist=Math.hypot(item.cx-centerX,item.cy-centerY);
       const range=item.range||600;
-      const vol=muted?0:Math.max(0,Math.min(1,1-dist/range));
+      const t=Math.max(0,Math.min(1,1-dist/range));
+      const vol=muted?0:t*t*t;
       if(!audioRefs.current[item.id]){
         const a=new Audio(item.url);
         a.loop=!!item.loop;
