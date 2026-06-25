@@ -480,7 +480,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   };
 
   const zoom=view.zoom;
-  const lod=zoom>=0.55?'full':(zoom>=0.25?'mid':(zoom>=0.1?'low':'tiny'));
+  const lod=zoom>=0.25?'full':'low';
   const margin=300;
   const wL=(0-view.x)/zoom-margin,wT=(0-view.y)/zoom-margin;
   const wR=(vp.w-view.x)/zoom+margin,wB=(vp.h-view.y)/zoom+margin;
@@ -608,15 +608,6 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             if(item.type==='audio'){
               return null; // Audio rendered separately on top
             }
-            if(lod==='tiny'){
-              if(item.type==='doodle'||item.type==='markertext'){/* render normally below */}
-              else{
-              const w=item.type==='sticker'?(item.size||44):(item.type==='bubble'?150*(item.scale||1):(item.w||148));
-              const h=item.type==='sticker'?(item.size||44):(item.type==='bubble'?70*(item.scale||1):(item.h||148));
-              const col=item.type==='photo'||item.type==='cutout'?(item.dominantColor||"#d8cdb8"):(item.type==='sticker'?"#e6c25c":(item.color||"#ffffff"));
-              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,background:col,borderRadius:item.type==='sticker'?"50%":6,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)"}}/>);
-              }
-            }
             if(lod==='low'&&(item.type==='photo'||item.type==='polaroid'||item.type==='cutout')&&item.url){
               const w=item.w||148;const h=item.h||148;
               const colors=item.topColors||[item.dominantColor||'#d8cdb8'];
@@ -649,7 +640,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             if(item.type==='polaroid'||item.type==='photo'){const isPhoto=item.type==='photo';const pinColor=PIN_COLORS[(item.id||0)%PIN_COLORS.length];return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"pointer",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}else if(item.url){setViewPhoto(item);}}} onMouseEnter={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${(item.rot||0)*0.3}deg) scale(1.06)`;e.currentTarget.style.zIndex=99;}}} onMouseLeave={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(1)`;e.currentTarget.style.zIndex=item.zIndex;}}}>
               <div style={{position:"absolute",top:-14,left:"50%",transform:"translateX(-50%)",width:22,height:22,borderRadius:"50%",background:`radial-gradient(circle at 35% 35%,${pinColor}ee,${pinColor})`,boxShadow:"0 3px 10px rgba(0,0,0,0.45),inset 0 1px 2px rgba(255,255,255,0.4)",zIndex:2}}/>
               <div style={{background:"white",padding:isPhoto?"5px 5px 30px 5px":"8px 8px 36px 8px",boxShadow:isSel?"0 14px 34px rgba(0,0,0,0.30),0 0 0 2px rgba(74,144,226,0.55)":"0 8px 20px rgba(0,0,0,0.25),0 2px 4px rgba(0,0,0,0.10)",width:item.w||148,transition:"box-shadow 0.15s"}}>
-                {isPhoto?<img src={lod==='full'?item.url:(item.thumb||item.url)} decoding="async" style={{width:"100%",height:item.h||148,objectFit:"cover",display:"block",background:item.dominantColor||"#e8e0d4"}} alt=""/>:<div style={{width:"100%",height:item.h||148,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.min(item.w||148,item.h||148)*0.4}}>{item.emoji}</div>}
+                {isPhoto?<img src={item.url} decoding="async" style={{width:"100%",height:item.h||148,objectFit:"cover",display:"block",background:item.dominantColor||"#e8e0d4"}} alt=""/>:<div style={{width:"100%",height:item.h||148,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.min(item.w||148,item.h||148)*0.4}}>{item.emoji}</div>}
                 {lod==='full'&&<div onDoubleClick={e=>{if(editing){e.stopPropagation();setEditingCaption(item.id);}}} style={{marginTop:6,fontFamily:"'Permanent Marker',cursive",fontSize:13,color:"#1a1a1a",textAlign:"center",lineHeight:1.3,minHeight:16,cursor:editing?"text":"default"}}>
                   {editingCaption===item.id
                     ?<input autoFocus defaultValue={item.caption||""} onBlur={e=>{setItems(p=>p.map(i=>i.id===item.id?{...i,caption:e.target.value}:i));setEditingCaption(null);}} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();if(e.key==='Escape')setEditingCaption(null);}} onClick={e=>e.stopPropagation()} style={{background:"transparent",border:"none",borderBottom:"1px solid #ccc",outline:"none",fontFamily:"'Permanent Marker',cursive",fontSize:13,color:"#1a1a1a",textAlign:"center",width:"100%",padding:0}}/>
@@ -669,7 +660,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
               <div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div><div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div>
             </div>);}
             if(item.type==='cutout'){return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"pointer",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}else if(item.url){setViewPhoto(item);}}} onMouseEnter={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${(item.rot||0)*0.3}deg) scale(1.06)`;e.currentTarget.style.zIndex=99;}}} onMouseLeave={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(1)`;e.currentTarget.style.zIndex=item.zIndex;}}}>
-              <img src={lod==='full'?item.url:(item.thumb||item.url)} decoding="async" style={{width:item.w||200,height:item.h||200,objectFit:"cover",display:"block",borderRadius:4}} alt=""/>
+              <img src={item.url} decoding="async" style={{width:item.w||200,height:item.h||200,objectFit:"cover",display:"block",borderRadius:4}} alt=""/>
               {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div>{item.url&&<div onClick={e=>{e.stopPropagation();cutOutPhoto(item);}} style={{position:"absolute",top:-10,left:-10,height:20,borderRadius:10,background:cuttingOut?"#888":"#2a9d8f",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",cursor:cuttingOut?"default":"pointer",zIndex:10,padding:"0 8px",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>{cuttingOut?"u{23F3}":"✂️ Cut"}</div>}<div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
             </div>);}
             if(item.type==='markertext'){const isEditingThis=editingText===item.id;const scale=item.scale||1;return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(${scale})`,cursor:editing&&!isEditingThis?"grab":"default",userSelect:"none"}} onMouseDown={e=>{if(!isEditingThis)startDrag(e,item.id);}} onTouchStart={e=>{if(!isEditingThis)startDrag(e,item.id);}} onClick={e=>{if(editing){e.stopPropagation();bringToFront(item.id);setSelected(item.id);}}} onDoubleClick={e=>{if(editing&&lod==='full'){e.stopPropagation();setEditingText(item.id);}}}>
