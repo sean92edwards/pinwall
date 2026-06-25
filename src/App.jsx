@@ -621,7 +621,9 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
               const w=item.w||148;const h=item.h||148;
               const colors=item.topColors||[item.dominantColor||'#d8cdb8'];
               const bg=colors.length>=3?`linear-gradient(135deg,${colors[0]} 0%,${colors[1]} 50%,${colors[2]} 100%)`:(colors.length>=2?`linear-gradient(135deg,${colors[0]},${colors[1]})`:(colors[0]||'#d8cdb8'));
-              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,borderRadius:4,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)",background:bg}}/>);
+              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,borderRadius:4,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)",background:bg,overflow:"hidden"}}>
+                <img src={item.thumb||item.url} decoding="async" style={{width:w,height:h,objectFit:"cover",display:"block",visibility:"hidden"}} alt=""/>
+              </div>);
             }
             if(lod==='low'&&item.type!=='doodle'&&item.type!=='markertext'){
               const w=item.type==='sticker'?(item.size||44):(item.type==='bubble'?150*(item.scale||1):(item.w||148));
