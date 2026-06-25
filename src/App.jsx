@@ -68,6 +68,8 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const [homeToast,setHomeToast]=useState(false);
   const clearedDoodles=useRef([]);
   const [vp,setVp]=useState({w:1200,h:700});
+  const [showZoom,setShowZoom]=useState(true);
+  const zoomTimeout=useRef(null);
   const dragStart=useRef(null);
   const panStart=useRef(null);
   const viewportRef=useRef(null);
@@ -77,6 +79,13 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const viewRef=useRef(view);
   const hasLoaded=useRef(false);
   useEffect(()=>{viewRef.current=view;},[view]);
+
+  useEffect(()=>{
+    setShowZoom(true);
+    if(zoomTimeout.current)clearTimeout(zoomTimeout.current);
+    zoomTimeout.current=setTimeout(()=>setShowZoom(false),3000);
+    return()=>{if(zoomTimeout.current)clearTimeout(zoomTimeout.current);};
+  },[view]);
 
   useEffect(()=>{
     const measure=()=>{const el=viewportRef.current;if(el)setVp({w:el.clientWidth,h:el.clientHeight});};
@@ -641,8 +650,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
         {currentPath&&<svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:8,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
           <path d={currentPath} fill="none" stroke={doodleColor} strokeWidth={doodleWidth*1.5/view.zoom} strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
         </svg>}
-        <div className="wall-hint" style={{position:"absolute",left:16,bottom:14,zIndex:60,fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.04em",color:"rgba(255,255,255,0.55)",pointerEvents:"none"}}>{doodling?"Draw on the board":"drag to pan � scroll to zoom � Shift + scroll to pan"}</div>
-        <div className="zoom-controls" style={{position:"absolute",right:16,bottom:16,zIndex:60,display:"flex",alignItems:"center",gap:6}}>
+        <div className="zoom-controls" style={{position:"absolute",right:16,bottom:16,zIndex:60,display:"flex",alignItems:"center",gap:6,opacity:showZoom?1:0,transition:"opacity 0.4s ease",pointerEvents:showZoom?"auto":"none"}}>
           <button onClick={()=>zoomBy(1/1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>-</button>
           <div style={{minWidth:52,textAlign:"center",background:"rgba(44,38,32,0.85)",color:"#fff",borderRadius:9,padding:"7px 8px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700}}>{Math.round(zoom*100)}%</div>
           <button onClick={()=>zoomBy(1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>+</button>
@@ -805,7 +813,6 @@ function SharedWallView({items:initialItems,label}){
             return null;
           })}
         </div>
-        <div style={{position:"absolute",left:16,bottom:14,zIndex:60,fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.04em",color:"rgba(255,255,255,0.55)",pointerEvents:"none"}}>drag to pan � scroll to zoom</div>
         <div style={{position:"absolute",right:16,bottom:16,zIndex:60,display:"flex",alignItems:"center",gap:6}}>
           <button onClick={()=>zoomBy(1/1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>-</button>
           <div style={{minWidth:52,textAlign:"center",background:"rgba(44,38,32,0.85)",color:"#fff",borderRadius:9,padding:"7px 8px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700}}>{Math.round(zoom*100)}%</div>
