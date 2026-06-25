@@ -440,7 +440,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   };
 
   const zoom=view.zoom;
-  const lod=zoom>=0.55?'full':(zoom>=0.22?'mid':'low');
+  const lod=zoom>=0.55?'full':(zoom>=0.35?'mid':(zoom>=0.15?'low':'tiny'));
   const margin=300;
   const wL=(0-view.x)/zoom-margin,wT=(0-view.y)/zoom-margin;
   const wR=(vp.w-view.x)/zoom+margin,wB=(vp.h-view.y)/zoom+margin;
@@ -543,7 +543,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             if(item.type==='audio'){
               return null; // Audio rendered separately on top
             }
-            if(lod==='low'){
+            if(lod==='tiny'){
               if(item.type==='doodle'||item.type==='markertext'){/* render normally below */}
               else{
               const w=item.type==='sticker'?(item.size||44):(item.type==='bubble'?150*(item.scale||1):(item.w||148));
@@ -551,6 +551,18 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
               const col=item.type==='photo'||item.type==='cutout'?(item.dominantColor||"#d8cdb8"):(item.type==='sticker'?"#e6c25c":(item.color||"#ffffff"));
               return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,background:col,borderRadius:item.type==='sticker'?"50%":6,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)"}}/>);
               }
+            }
+            if(lod==='low'&&(item.type==='photo'||item.type==='polaroid'||item.type==='cutout')&&item.url){
+              const w=item.w||148;const h=item.h||148;
+              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,overflow:"hidden",borderRadius:4,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)"}}>
+                <img src={item.url} style={{width:w,height:h,objectFit:"cover",imageRendering:"pixelated",filter:"blur(2px) saturate(0.8)",display:"block"}} alt=""/>
+              </div>);
+            }
+            if(lod==='low'&&item.type!=='doodle'&&item.type!=='markertext'){
+              const w=item.type==='sticker'?(item.size||44):(item.type==='bubble'?150*(item.scale||1):(item.w||148));
+              const h=item.type==='sticker'?(item.size||44):(item.type==='bubble'?70*(item.scale||1):(item.h||148));
+              const col=item.type==='sticker'?"#e6c25c":(item.color||"#ffffff");
+              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,background:col,borderRadius:item.type==='sticker'?"50%":6,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)"}}/>);
             }
             if(item.type==='sticker')return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"default",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}}}><div style={{fontSize:item.size||44,lineHeight:1,filter:"drop-shadow(1px 3px 6px rgba(0,0,0,0.22))"}}>{item.emoji}</div>{isSel&&lod==='full'&&<><div style={{position:"absolute",inset:-5,border:"1.5px dashed rgba(74,144,226,0.65)",borderRadius:6,pointerEvents:"none"}}/><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}/><div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}</div>);
             if(item.type==='bubble'){const isEditingThis=editingText===item.id;const scale=item.scale||1;const pinColor=PIN_COLORS[(item.id||0)%PIN_COLORS.length];return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(${scale})`,cursor:editing&&!isEditingThis?"grab":"default",userSelect:"none"}} onMouseDown={e=>{if(!isEditingThis)startDrag(e,item.id);}} onTouchStart={e=>{if(!isEditingThis)startDrag(e,item.id);}} onClick={e=>{if(editing){e.stopPropagation();bringToFront(item.id);setSelected(item.id);}}} onDoubleClick={e=>{if(editing&&lod==='full'){e.stopPropagation();setEditingText(item.id);}}}>
