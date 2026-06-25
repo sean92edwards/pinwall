@@ -440,7 +440,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   };
 
   const zoom=view.zoom;
-  const lod=zoom>=0.55?'full':(zoom>=0.35?'mid':(zoom>=0.15?'low':'tiny'));
+  const lod=zoom>=0.55?'full':(zoom>=0.25?'mid':(zoom>=0.1?'low':'tiny'));
   const margin=300;
   const wL=(0-view.x)/zoom-margin,wT=(0-view.y)/zoom-margin;
   const wR=(vp.w-view.x)/zoom+margin,wB=(vp.h-view.y)/zoom+margin;
@@ -555,7 +555,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             if(lod==='low'&&(item.type==='photo'||item.type==='polaroid'||item.type==='cutout')&&item.url){
               const w=item.w||148;const h=item.h||148;
               return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,overflow:"hidden",borderRadius:4,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)"}}>
-                <img src={item.url} style={{width:w,height:h,objectFit:"cover",imageRendering:"pixelated",filter:"blur(2px) saturate(0.8)",display:"block"}} alt=""/>
+                <canvas ref={el=>{if(el&&!el.dataset.drawn){el.dataset.drawn='1';const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{const ctx=el.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.drawImage(img,0,0,8,8);};img.src=item.url;}}} width={8} height={8} style={{width:w,height:h,imageRendering:"pixelated",display:"block"}}/>
               </div>);
             }
             if(lod==='low'&&item.type!=='doodle'&&item.type!=='markertext'){
