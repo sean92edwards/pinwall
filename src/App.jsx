@@ -8,24 +8,6 @@ const STICKERS = ["\u{1F496}","⭐","\u2728","\u{1F31F}","\u{1F4AB}","\u{1F389}"
 const BUBBLE_COLORS = ["#ffb6c8","#fff9c4","#c8e6ff","#d4f0c8","#e8d4f5","#fde8c8","#ffffff","#ffc0cb","#f0e68c","#b2dfdb","#ffccbc","#d1c4e9","#f8bbd0","#c5cae9","#dcedc8","#ffe0b2"];
 
 
-const INITIAL_ITEMS=[
-  {id:1,type:'polaroid',emoji:"??",caption:"Mum's 60th",color:"#fce4ec",cx:180,cy:210,rot:4,zIndex:1,w:148,h:148},
-  {id:2,type:'bubble',text:"Happy Birthday Mum! ????",cx:390,cy:160,rot:-3,zIndex:2,color:"#fff9c4"},
-  {id:3,type:'sticker',emoji:"??",cx:310,cy:90,rot:15,size:52,zIndex:3},
-  {id:4,type:'sticker',emoji:"?",cx:530,cy:110,rot:-10,size:38,zIndex:4},
-  {id:5,type:'polaroid',emoji:"???????????",caption:"All together",color:"#e3f2fd",cx:610,cy:230,rot:-4,zIndex:5,w:155,h:130},
-  {id:6,type:'bubble',text:"Best day ever! ??",cx:820,cy:180,rot:2,zIndex:6,color:"#e8f5e9"},
-  {id:7,type:'sticker',emoji:"??",cx:760,cy:340,rot:-18,size:44,zIndex:7},
-  {id:8,type:'sticker',emoji:"??",cx:480,cy:330,rot:8,size:48,zIndex:8},
-  {id:9,type:'polaroid',emoji:"???",caption:"Tenerife ??",color:"#fde8c8",cx:1070,cy:210,rot:-3,zIndex:9,w:152,h:152},
-  {id:10,type:'sticker',emoji:"??",cx:990,cy:120,rot:8,size:42,zIndex:10},
-  {id:11,type:'bubble',text:"Miss this place ??",cx:1270,cy:165,rot:-2,zIndex:11,color:"#e3f2fd"},
-  {id:12,type:'polaroid',emoji:"??",caption:"Christmas 2024",color:"#fff3e0",cx:1500,cy:230,rot:3,zIndex:12,w:145,h:162},
-  {id:13,type:'sticker',emoji:"??",cx:1430,cy:100,rot:-5,size:46,zIndex:13},
-  {id:14,type:'sticker',emoji:"??",cx:1640,cy:150,rot:12,size:42,zIndex:14},
-  {id:15,type:'bubble',text:"It actually snowed this year!!",cx:1720,cy:300,rot:1,zIndex:15,color:"#e3f2fd"},
-];
-
 function hdl(pos){const b={position:"absolute",zIndex:10,background:"#4a90e2",cursor:"grab",display:"flex",alignItems:"center",justifyContent:"center",color:"white",boxShadow:"0 1px 6px rgba(0,0,0,0.3)",border:"2px solid white"};if(pos==="top")return{...b,top:-30,left:"50%",transform:"translateX(-50%)",width:24,height:24,borderRadius:"50%",fontSize:14};if(pos==="br")return{...b,bottom:-5,right:-5,width:20,height:20,borderRadius:5,fontSize:11,cursor:"se-resize"};}
 const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
 
@@ -613,7 +595,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
               const colors=item.topColors||[item.dominantColor||'#d8cdb8'];
               const bg=colors.length>=3?`linear-gradient(135deg,${colors[0]} 0%,${colors[1]} 50%,${colors[2]} 100%)`:(colors.length>=2?`linear-gradient(135deg,${colors[0]},${colors[1]})`:(colors[0]||'#d8cdb8'));
               return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,borderRadius:4,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)",background:bg,overflow:"hidden"}}>
-                <img src={item.thumb||item.url} decoding="async" style={{width:w,height:h,objectFit:"cover",display:"block",visibility:"hidden"}} alt=""/>
+                <img src={item.url} decoding="async" style={{width:w,height:h,objectFit:"cover",display:"block",visibility:"hidden"}} alt=""/>
               </div>);
             }
             if(lod==='low'&&item.type!=='doodle'&&item.type!=='markertext'){
@@ -1053,7 +1035,7 @@ export default function Pinwall(){
 
   return(
     <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:44px!important;padding:0 10px!important}.pinwall-nav .logo-text{font-size:18px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:0!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.wall-toolbar .tb-pill button,.wall-toolbar .tb-pill label{font-size:0!important}.wall-toolbar .tb-pill button span,.wall-toolbar .tb-pill label span{font-size:14px!important}.wall-toolbar{bottom:60px!important}.photo-modal-img{min-height:55vh!important}.photo-modal-comments{width:100%!important;max-height:40vh!important}.photo-modal-close{top:10px!important;right:10px!important}.photo-modal{flex-direction:column!important}}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:44px!important;padding:0 10px!important}.pinwall-nav .logo-text{font-size:18px!important}.zoom-controls{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:0!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.wall-toolbar .tb-pill button,.wall-toolbar .tb-pill label{font-size:0!important}.wall-toolbar .tb-pill button span,.wall-toolbar .tb-pill label span{font-size:14px!important}.wall-toolbar{bottom:60px!important}.photo-modal-img{min-height:55vh!important}.photo-modal-comments{width:100%!important;max-height:40vh!important}.photo-modal-close{top:10px!important;right:10px!important}.photo-modal{flex-direction:column!important}}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
       <div className="pinwall-nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
         <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
           <span style={{fontSize:22,lineHeight:1,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>📌</span>
