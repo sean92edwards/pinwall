@@ -1,0 +1,18 @@
+{
+  "name": "Pinwall",
+  "short_name": "Pinwall",
+  "description": "A place for memories, not algorithms",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#c6a06a",
+  "theme_color": "#c6a06a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
