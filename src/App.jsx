@@ -1095,41 +1095,6 @@ export default function Pinwall(){
           </div>
           <div onClick={()=>supabase.auth.signOut()} style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:13,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
           {session.user.email==='sean92edwards@gmail.com'&&<button onClick={async()=>{const{data}=await supabase.from('walls').select('items').eq('user_id',session.user.id).single();if(data?.items){const blob=new Blob([JSON.stringify(data.items)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='demo-wall.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);alert('Downloaded demo-wall.json ('+data.items.length+' items)');}}} style={{display:"inline-flex",alignItems:"center",padding:"6px 10px",borderRadius:16,border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,cursor:"pointer"}}>Export demo</button>}
-          {session.user.email==='sean92edwards@gmail.com'&&<button onClick={async()=>{
-            const{data}=await supabase.from('walls').select('items').eq('user_id',session.user.id).single();
-            if(!data?.items)return;
-            const photos=data.items.filter(i=>(i.type==='photo'||i.type==='cutout')&&i.url&&!i.topColors);
-            if(!photos.length){alert('All photos already have colors!');return;}
-            alert('Processing '+photos.length+' photos...');
-            let updated=0;
-            for(const item of photos){
-              try{
-                const img=await new Promise((res,rej)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=rej;i.src=item.url;});
-                const c=document.createElement('canvas');c.width=16;c.height=16;
-                const ctx=c.getContext('2d');ctx.drawImage(img,0,0,16,16);
-                const px=ctx.getImageData(0,0,16,16).data;
-                const buckets={};
-                for(let i=0;i<px.length;i+=4){const r=Math.round(px[i]/32)*32,g=Math.round(px[i+1]/32)*32,b=Math.round(px[i+2]/32)*32;const k=`${r},${g},${b}`;buckets[k]=(buckets[k]||0)+1;}
-                const sorted=Object.entries(buckets).sort((a,b)=>b[1]-a[1]);
-                item.topColors=sorted.slice(0,3).map(([k])=>`rgb(${k})`);
-                item.dominantColor=item.topColors[0];
-                // Generate and upload thumbnail
-                const max=400;const ratio=img.width/img.height;
-                const tw=ratio>=1?max:max*ratio;const th=ratio>=1?max/ratio:max;
-                const tc=document.createElement('canvas');tc.width=tw;tc.height=th;
-                tc.getContext('2d').drawImage(img,0,0,tw,th);
-                const thumbBlob=await new Promise(r=>tc.toBlob(r,'image/webp',0.7));
-                if(thumbBlob){
-                  const thumbName=`${session.user.id}/thumbs/${item.id}.webp`;
-                  const{error:te}=await supabase.storage.from('photos').upload(thumbName,thumbBlob,{contentType:'image/webp',upsert:true});
-                  if(!te)item.thumb=supabase.storage.from('photos').getPublicUrl(thumbName).data.publicUrl;
-                }
-                updated++;
-              }catch(e){console.warn('Skip:',item.id,e);}
-            }
-            await supabase.from('walls').update({items:data.items}).eq('user_id',session.user.id);
-            alert('Done! Updated '+updated+'/'+photos.length+' photos. Refresh to see changes.');
-          }} style={{display:"inline-flex",alignItems:"center",padding:"6px 10px",borderRadius:16,border:"none",background:"rgba(42,157,143,0.9)",color:"#fff",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,cursor:"pointer"}}>Gen thumbs</button>}
         </div>
       </div>
       <HorizontalWall session={session} muted={muted} editing={editing} setEditing={setEditing} username={username}/>
