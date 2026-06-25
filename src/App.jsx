@@ -637,11 +637,11 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
           <button onClick={resetView} style={{height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:11,fontWeight:700,fontFamily:"'Nunito',sans-serif",cursor:"pointer",padding:"0 12px"}}>Reset</button>
         </div>
       </div>
-      {viewPhoto&&<div onClick={()=>{setViewPhoto(null);setPhotoComments([]);setCommentText("");}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1000,display:"flex",alignItems:"stretch"}}>
-        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
+      {viewPhoto&&<div className="photo-modal" onClick={()=>{setViewPhoto(null);setPhotoComments([]);setCommentText("");}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1000,display:"flex",alignItems:"stretch"}}>
+        <div className="photo-modal-img" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
           <img src={viewPhoto.url} style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",padding:20}} onClick={e=>e.stopPropagation()} alt=""/>
         </div>
-        <div onClick={e=>e.stopPropagation()} style={{width:300,background:"#fff",display:"flex",flexDirection:"column",cursor:"default"}}>
+        <div className="photo-modal-comments" onClick={e=>e.stopPropagation()} style={{width:300,background:"#fff",display:"flex",flexDirection:"column",cursor:"default"}}>
           <div style={{padding:"16px",borderBottom:"1px solid #eee",fontFamily:"'Nunito',sans-serif",fontSize:14,fontWeight:800}}>Comments</div>
           <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
             {photoComments.length===0&&<div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#999",textAlign:"center",padding:"30px 0"}}>No comments yet</div>}
@@ -658,7 +658,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             <button onClick={postComment} style={{background:"#1a1a1a",color:"#fff",border:"none",borderRadius:8,padding:"8px 12px",fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>Post</button>
           </div>
         </div>
-        <div onClick={()=>{setViewPhoto(null);setPhotoComments([]);setCommentText("");}} style={{position:"absolute",top:20,right:320,color:"white",fontSize:32,cursor:"pointer"}}>✕</div>
+        <div className="photo-modal-close" onClick={()=>{setViewPhoto(null);setPhotoComments([]);setCommentText("");}} style={{position:"absolute",top:20,right:320,color:"white",fontSize:32,cursor:"pointer"}}>✕</div>
       </div>}
     </div>
   );
@@ -981,7 +981,7 @@ export default function Pinwall(){
 
   return(
     <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:44px!important;padding:0 10px!important}.pinwall-nav .logo-text{font-size:18px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:0!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.wall-toolbar .tb-pill button,.wall-toolbar .tb-pill label{font-size:0!important}.wall-toolbar .tb-pill button span,.wall-toolbar .tb-pill label span{font-size:14px!important}}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:44px!important;padding:0 10px!important}.pinwall-nav .logo-text{font-size:18px!important}.zoom-controls{display:none!important}.wall-hint{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:0!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.wall-toolbar .tb-pill button,.wall-toolbar .tb-pill label{font-size:0!important}.wall-toolbar .tb-pill button span,.wall-toolbar .tb-pill label span{font-size:14px!important}.photo-modal-img{min-height:55vh!important}.photo-modal-comments{width:100%!important;max-height:40vh!important}.photo-modal-close{top:10px!important;right:10px!important}.photo-modal{flex-direction:column!important}}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
       <div className="pinwall-nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
         <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
           <span style={{fontSize:22,lineHeight:1,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>📌</span>
