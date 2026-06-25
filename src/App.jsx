@@ -30,7 +30,14 @@ function hdl(pos){const b={position:"absolute",zIndex:10,background:"#4a90e2",cu
 const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
 
 function HorizontalWall({session,muted,editing,setEditing,username}){
-  const [items,setItems]=useState([]);
+  const DEMO_ITEMS=[
+    {id:1,type:'bubble',text:"Welcome to Pinwall!\nTry adding photos, notes\nand doodles",cx:400,cy:280,rot:-2,color:"#ffb6c8",w:160,h:100,zIndex:1},
+    {id:2,type:'sticker',emoji:"\u{1F389}",cx:250,cy:150,rot:12,size:60,zIndex:2},
+    {id:3,type:'sticker',emoji:"\u{1F4F7}",cx:620,cy:180,rot:-8,size:50,zIndex:3},
+    {id:4,type:'markertext',text:"Your memories here",cx:400,cy:450,rot:0,color:"#1a1a1a",scale:1.2,zIndex:4},
+    {id:5,type:'sticker',emoji:"\u2B50",cx:550,cy:380,rot:15,size:44,zIndex:5},
+  ];
+  const [items,setItems]=useState(session?[]:[...DEMO_ITEMS]);
   const [selected,setSelected]=useState(null);
   const [editingText,setEditingText]=useState(null);
   const [editingCaption,setEditingCaption]=useState(null);
@@ -814,6 +821,7 @@ export default function Pinwall(){
   const [muted,setMuted]=useState(false);
   const [editing,setEditing]=useState(false);
   const [showFriendsPanel,setShowFriendsPanel]=useState(false);
+  const [demoMode,setDemoMode]=useState(false);
   const [sharedView,setSharedView]=useState(null);
   const [friends,setFriends]=useState([]);
   const [viewingFriend,setViewingFriend]=useState(null);
@@ -939,7 +947,25 @@ export default function Pinwall(){
     return <SharedWallView items={sharedView.items||[]} label={sharedView.label}/>;
   }
 
-  if(!session) return <Auth/>;
+  if(!session&&!demoMode) return <Auth onTryDemo={()=>setDemoMode(true)}/>;
+
+  if(demoMode){
+    return(
+      <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
+        <div style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
+            <span style={{fontSize:22,lineHeight:1,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>📌</span>
+            <span style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:22,letterSpacing:"-0.02em",color:"#fff",textShadow:"0 2px 6px rgba(0,0,0,0.4)"}}>Pinwall Demo</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
+            <button onClick={()=>setDemoMode(false)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,background:"rgba(30,30,30,0.85)",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.3)"}}>Sign up to save</button>
+          </div>
+        </div>
+        <HorizontalWall session={null} muted={false} editing={true} setEditing={()=>{}} username="demo"/>
+      </div>
+    );
+  }
 
   if(needsUsername) return(
     <div style={{minHeight:"100vh",background:"#efe5d4",display:"flex",alignItems:"center",justifyContent:"center"}}>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "./supabase";
 
-export default function Auth() {
+export default function Auth({onTryDemo}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
@@ -57,6 +57,12 @@ export default function Auth() {
           <span onClick={() => setIsSignUp(!isSignUp)} style={{ color:"#1a1a1a", fontWeight:700, cursor:"pointer" }}>
             {isSignUp ? "Sign in" : "Sign up"}
           </span>
+        </div>
+        <div style={{ marginTop:24, paddingTop:20, borderTop:"1px solid #e8e2d8", textAlign:"center" }}>
+          <button onClick={onTryDemo} style={{ background:"none", border:"2px solid #2a9d8f", color:"#2a9d8f", borderRadius:28, padding:"12px 24px", fontFamily:"'Nunito',sans-serif", fontSize:13, fontWeight:700, cursor:"pointer", width:"100%" }}>
+            Try it without an account
+          </button>
+          <div style={{ fontFamily:"'Nunito',sans-serif", fontSize:11, color:"#aaa", marginTop:8 }}>Explore a demo wall. Resets on refresh.</div>
         </div>
       </div>
     </div>
