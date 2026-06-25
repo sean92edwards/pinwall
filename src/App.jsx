@@ -724,10 +724,13 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
           <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
             {photoComments.length===0&&<div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#999",textAlign:"center",padding:"30px 0"}}>No comments yet</div>}
             {photoComments.map(c=>(
-              <div key={c.id} style={{marginBottom:12}}>
-                <div style={{fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,color:"#2a2118"}}>@{c.author_name}</div>
-                <div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#555",marginTop:2}}>{c.text}</div>
-                <div style={{fontFamily:"'Nunito',sans-serif",fontSize:9,color:"#bbb",marginTop:2}}>{new Date(c.created_at).toLocaleDateString()}</div>
+              <div key={c.id} style={{marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                <div>
+                  <div style={{fontFamily:"'Nunito',sans-serif",fontSize:11,fontWeight:700,color:"#2a2118"}}>@{c.author_name}</div>
+                  <div style={{fontFamily:"'Nunito',sans-serif",fontSize:12,color:"#555",marginTop:2}}>{c.text}</div>
+                  <div style={{fontFamily:"'Nunito',sans-serif",fontSize:9,color:"#bbb",marginTop:2}}>{new Date(c.created_at).toLocaleDateString()}</div>
+                </div>
+                {session?.user&&(c.author_id===session.user.id||c.wall_owner_id===session.user.id)&&<button onClick={async()=>{await supabase.from('photo_comments').delete().eq('id',c.id);setPhotoComments(p=>p.filter(x=>x.id!==c.id));}} style={{background:"none",border:"none",color:"#ccc",fontSize:14,cursor:"pointer",padding:"0 4px",lineHeight:1}}>✕</button>}
               </div>
             ))}
           </div>
