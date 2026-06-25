@@ -439,7 +439,19 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       URL.revokeObjectURL(objectUrl);
       const maxDim=200;const ratio=img.width/img.height;
       const w=ratio>=1?maxDim:maxDim*ratio;const h=ratio>=1?maxDim/ratio:maxDim;
-      setItems(p=>[{id:Date.now(),type:photoModeRef.current==='frameless'?'cutout':'photo',url:publicUrl,thumb:thumbUrl,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*12,w,h,zIndex:maxZ+1},...p]);
+      // Extract top 3 colors from a small sample
+      const sCanvas=document.createElement('canvas');sCanvas.width=16;sCanvas.height=16;
+      const sCtx=sCanvas.getContext('2d');sCtx.drawImage(img,0,0,16,16);
+      const pixels=sCtx.getImageData(0,0,16,16).data;
+      const buckets={};
+      for(let i=0;i<pixels.length;i+=4){
+        const r=Math.round(pixels[i]/32)*32,g=Math.round(pixels[i+1]/32)*32,b=Math.round(pixels[i+2]/32)*32;
+        const key=`${r},${g},${b}`;buckets[key]=(buckets[key]||0)+1;
+      }
+      const sorted=Object.entries(buckets).sort((a,b)=>b[1]-a[1]);
+      const topColors=sorted.slice(0,3).map(([k])=>`rgb(${k})`);
+      const dominantColor=topColors[0]||'#d8cdb8';
+      setItems(p=>[{id:Date.now(),type:photoModeRef.current==='frameless'?'cutout':'photo',url:publicUrl,thumb:thumbUrl,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*12,w,h,zIndex:maxZ+1,dominantColor,topColors},...p]);
       setMaxZ(z=>z+1);setUploading(false);
     };
     img.onerror=()=>{URL.revokeObjectURL(objectUrl);setUploading(false);};
@@ -607,9 +619,9 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             }
             if(lod==='low'&&(item.type==='photo'||item.type==='polaroid'||item.type==='cutout')&&item.url){
               const w=item.w||148;const h=item.h||148;
-              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,overflow:"hidden",borderRadius:4,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)"}}>
-                <img src={item.thumb||item.url} decoding="async" style={{width:w,height:h,objectFit:"cover",display:"block",filter:"blur(4px) saturate(0.7)"}} alt=""/>
-              </div>);
+              const colors=item.topColors||[item.dominantColor||'#d8cdb8'];
+              const bg=colors.length>=3?`linear-gradient(135deg,${colors[0]} 0%,${colors[1]} 50%,${colors[2]} 100%)`:(colors.length>=2?`linear-gradient(135deg,${colors[0]},${colors[1]})`:(colors[0]||'#d8cdb8'));
+              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,borderRadius:4,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)",background:bg}}/>);
             }
             if(lod==='low'&&item.type!=='doodle'&&item.type!=='markertext'){
               const w=item.type==='sticker'?(item.size||44):(item.type==='bubble'?150*(item.scale||1):(item.w||148));
