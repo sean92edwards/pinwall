@@ -464,10 +464,10 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const zoom=view.zoom;
   const isMobile=vp.w<=768;
   const lod=zoom>=(isMobile?0.25:0.30)?'full':'low';
-  const margin=300;
+  const margin=isMobile?100:200;
   const wL=(0-view.x)/zoom-margin,wT=(0-view.y)/zoom-margin;
   const wR=(vp.w-view.x)/zoom+margin,wB=(vp.h-view.y)/zoom+margin;
-  const itemHalf=it=>{if(it.type==='sticker')return(it.size||44);if(it.type==='bubble')return 170;if(it.type==='markertext'||it.type==='doodle')return 9999;return Math.max(it.w||148,it.h||148);};
+  const itemHalf=it=>{if(it.type==='sticker')return(it.size||44);if(it.type==='bubble'||it.type==='speech')return 170;if(it.type==='doodle')return Math.max(it.w||100,it.h||100)/2;if(it.type==='markertext')return 300;return Math.max(it.w||148,it.h||148);};
   const visible=items.filter(it=>{const h=itemHalf(it);return it.cx+h>=wL&&it.cx-h<=wR&&it.cy+h>=wT&&it.cy-h<=wB;});
   const sorted=[...visible].sort((a,b)=>(a.zIndex||1)-(b.zIndex||1));
 
@@ -584,7 +584,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       </div>}
       <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",background:"#c6a06a",backgroundImage:`radial-gradient(ellipse 120% 90% at 50% -5%,rgba(255,244,222,0.35) 0%,transparent 55%),radial-gradient(ellipse at 88% 108%,rgba(110,78,42,0.32) 0%,transparent 50%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='cork'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23cork)' opacity='0.4'/%3E%3C/svg%3E")`,backgroundSize:"100% 100%,100% 100%,150px 150px",userSelect:"none"}}>
       <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 90px rgba(0,0,0,0.22)",pointerEvents:"none",zIndex:5}}/>
-        <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,willChange:"transform",pointerEvents:(doodling&&!erasing)?"none":"auto"}}>
+        <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,pointerEvents:(doodling&&!erasing)?"none":"auto"}}>
           {sorted.map(item=>{
             const isSel=editing&&selected===item.id;
 
@@ -643,7 +643,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
               <img src={item.url} decoding="async" style={{width:item.w||200,height:item.h||200,objectFit:"cover",display:"block",borderRadius:4}} alt=""/>
               {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div>{item.url&&<div onClick={e=>{e.stopPropagation();cutOutPhoto(item);}} style={{position:"absolute",top:-10,left:-10,height:20,borderRadius:10,background:cuttingOut?"#888":"#2a9d8f",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",cursor:cuttingOut?"default":"pointer",zIndex:10,padding:"0 8px",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>{cuttingOut?"u{23F3}":"✂️ Cut"}</div>}<div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
             </div>);}
-            if(item.type==='markertext'){const isEditingThis=editingText===item.id;const scale=item.scale||1;return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(${scale})`,cursor:editing&&!isEditingThis?"grab":"default",userSelect:"none"}} onMouseDown={e=>{if(!isEditingThis)startDrag(e,item.id);}} onTouchStart={e=>{if(!isEditingThis)startDrag(e,item.id);}} onClick={e=>{if(editing){e.stopPropagation();bringToFront(item.id);setSelected(item.id);}}} onDoubleClick={e=>{if(editing&&lod==='full'){e.stopPropagation();setEditingText(item.id);}}}>
+            if(item.type==='markertext'){if(lod==='low')return null;const isEditingThis=editingText===item.id;const scale=item.scale||1;return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(${scale})`,cursor:editing&&!isEditingThis?"grab":"default",userSelect:"none"}} onMouseDown={e=>{if(!isEditingThis)startDrag(e,item.id);}} onTouchStart={e=>{if(!isEditingThis)startDrag(e,item.id);}} onClick={e=>{if(editing){e.stopPropagation();bringToFront(item.id);setSelected(item.id);}}} onDoubleClick={e=>{if(editing&&lod==='full'){e.stopPropagation();setEditingText(item.id);}}}>
               {isEditingThis
                 ?<textarea autoFocus defaultValue={item.text} onBlur={e=>{setItems(p=>p.map(i=>i.id===item.id?{...i,text:e.target.value}:i));setEditingText(null);}} onKeyDown={e=>{if(e.key==='Escape')setEditingText(null);}} onClick={e=>e.stopPropagation()} style={{background:"transparent",border:"none",borderBottom:`2px solid ${item.color||"#1a1a1a"}`,outline:"none",fontFamily:"'Permanent Marker',cursive",fontSize:24,color:item.color||"#1a1a1a",textAlign:"center",minWidth:100,padding:"2px 4px",resize:"none",lineHeight:1.4,display:"block",whiteSpace:"pre",overflowWrap:"normal",wordBreak:"keep-all"}}/>
                 :<div style={{fontFamily:"'Permanent Marker',cursive",fontSize:24,color:item.color||"#1a1a1a",whiteSpace:"pre",textShadow:"1px 1px 0 rgba(0,0,0,0.05)"}}>{item.text||<span style={{opacity:0.3}}>type here</span>}</div>
@@ -654,7 +654,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
           })}
         </div>
         <svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:erasing?"auto":"none",zIndex:6,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
-          {items.filter(i=>i.type==='doodle').map(item=>(
+          {lod==='full'&&items.filter(i=>i.type==='doodle').filter(it=>{const h=Math.max(it.w||100,it.h||100)/2;return it.cx+h>=wL&&it.cx-h<=wR&&it.cy+h>=wT&&it.cy-h<=wB;}).map(item=>(
             <path key={item.id} d={item.path} fill="none" stroke={item.color||"#1a1a1a"} strokeWidth={(item.strokeWidth||3)*1.5} strokeLinecap="round" strokeLinejoin="round" opacity="0.9" transform={`translate(${item.cx-item.w/2},${item.cy-item.h/2})`} onClick={erasing?()=>setItems(p=>p.filter(i=>i.id!==item.id)):undefined} style={{cursor:erasing?"crosshair":"default",pointerEvents:erasing?"auto":"none"}}/>
           ))}
         </svg>
