@@ -538,7 +538,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   },[items,view,vp,muted]);
 
   return(
-    <div style={{height:"100dvh",position:"relative",display:"flex",flexDirection:"column"}}>
+    <div style={{minHeight:"100dvh",height:"calc(100dvh + env(safe-area-inset-bottom))",position:"relative",display:"flex",flexDirection:"column",background:"#c6a06a"}}>
       {homeToast&&<div style={{position:"absolute",bottom:80,left:"50%",transform:"translateX(-50%)",zIndex:300,background:"rgba(0,0,0,0.8)",color:"#fff",borderRadius:20,padding:"8px 18px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,animation:"slideUp 0.2s ease"}}>Home view set ✓</div>}
       {editing&&<div className="wall-toolbar" style={{position:"absolute",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:200,display:"flex",alignItems:"center",gap:8,animation:"slideUp 0.2s ease"}}>
         <div className="tb-pill" style={{display:"flex",alignItems:"center",gap:2,background:"rgba(255,253,248,0.97)",borderRadius:30,padding:6,border:"1px solid #e0d5c0",boxShadow:"0 4px 20px rgba(0,0,0,0.18)",backdropFilter:"blur(8px)"}}>
