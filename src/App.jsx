@@ -479,7 +479,8 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const audioFade=useRef(1);
   const audioFadeInterval=useRef(null);
   useEffect(()=>{
-    if(view.zoom<0.25){
+    const lodThreshold=isMobile?0.25:0.30;
+    if(view.zoom<lodThreshold){
       // Start fading out over 2 seconds if not already
       if(!audioFadeInterval.current&&audioFade.current>0){
         audioFadeInterval.current=setInterval(()=>{
