@@ -90,17 +90,14 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
         const loadedMaxZ=Math.max(...data.items.map(i=>i.zIndex||1),20);
         setMaxZ(loadedMaxZ);
       }
-      // Load home view from localStorage only on first mount this session
+      // Load home view from localStorage
       try{
         const saved=localStorage.getItem('pinwall_home_view');
         if(saved){
           setHomeViewSet(true);
           const hv=JSON.parse(saved);
           setHomeView(hv);
-          if(!window.__pinwall_view_applied){
-            setView(hv);
-            window.__pinwall_view_applied=true;
-          }
+          setView(hv);
         }
       }catch(e){}
       hasLoaded.current=true;
