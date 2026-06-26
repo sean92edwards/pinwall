@@ -462,7 +462,8 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   };
 
   const zoom=view.zoom;
-  const lod=zoom>=0.30?'full':'low';
+  const isMobile=vp.w<=768;
+  const lod=zoom>=(isMobile?0.20:0.30)?'full':'low';
   const margin=300;
   const wL=(0-view.x)/zoom-margin,wT=(0-view.y)/zoom-margin;
   const wR=(vp.w-view.x)/zoom+margin,wB=(vp.h-view.y)/zoom+margin;
