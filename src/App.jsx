@@ -876,6 +876,11 @@ export default function Pinwall(){
   const [shareCopied,setShareCopied]=useState(false);
   const [muted,setMuted]=useState(true);
   const [audioHint,setAudioHint]=useState(true);
+  useEffect(()=>{
+    const onInteract=()=>{setTimeout(()=>setAudioHint(false),5000);window.removeEventListener('touchstart',onInteract);window.removeEventListener('mousedown',onInteract);window.removeEventListener('wheel',onInteract);};
+    window.addEventListener('touchstart',onInteract,{once:true});window.addEventListener('mousedown',onInteract,{once:true});window.addEventListener('wheel',onInteract,{once:true});
+    return()=>{window.removeEventListener('touchstart',onInteract);window.removeEventListener('mousedown',onInteract);window.removeEventListener('wheel',onInteract);};
+  },[]);
   const [editing,setEditing]=useState(false);
   const [showFriendsPanel,setShowFriendsPanel]=useState(false);
   const [demoMode,setDemoMode]=useState(false);
