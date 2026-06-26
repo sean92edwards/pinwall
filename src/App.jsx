@@ -511,7 +511,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       const dist=Math.hypot(item.cx-centerX,item.cy-centerY);
       const range=item.range||600;
       const t=Math.max(0,Math.min(1,1-dist/range));
-      const baseVol=muted?0:t*t;
+      const baseVol=muted?0:t*t*(item.volume!==undefined?item.volume:1);
       const vol=baseVol*audioFade.current;
       if(!audioRefs.current[item.id]){
         const a=new Audio(item.url);
@@ -677,8 +677,10 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
                 <div style={{position:"absolute",top:7,left:9,right:9,height:18,borderRadius:4,background:"#d9c7a3",display:"flex",alignItems:"center",justifyContent:"space-around"}}><div style={{width:9,height:9,borderRadius:"50%",background:"#1f1b14"}}/><div style={{width:9,height:9,borderRadius:"50%",background:"#1f1b14"}}/></div>
                 <div style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontSize:9,color:"#e9c46a",fontFamily:"'Nunito',sans-serif",fontWeight:700,letterSpacing:"0.04em"}}>{item.loop?"↻ LOOP":"▶ ONCE"}</div>
               </div>
-              {isSel&&<div style={{position:"absolute",top:-44,left:"50%",transform:"translateX(-50%)",display:"flex",gap:5,background:"rgba(0,0,0,0.8)",borderRadius:18,padding:"5px 8px",zIndex:20}} onClick={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()}>
+              {isSel&&<div style={{position:"absolute",top:-44,left:"50%",transform:"translateX(-50%)",display:"flex",gap:5,alignItems:"center",background:"rgba(0,0,0,0.8)",borderRadius:18,padding:"5px 8px",zIndex:20}} onClick={e=>e.stopPropagation()} onMouseDown={e=>e.stopPropagation()}>
                 <button onClick={()=>setItems(p=>p.map(i=>i.id===item.id?{...i,loop:!i.loop}:i))} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>{item.loop?"↻ Loop":"▶ Once"}</button>
+                <input type="range" min="0" max="100" value={Math.round((item.volume||1)*100)} onChange={e=>setItems(p=>p.map(i=>i.id===item.id?{...i,volume:e.target.value/100}:i))} style={{width:60,height:4,accentColor:"#e9c46a",cursor:"pointer"}}/>
+                <span style={{color:"#e9c46a",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,minWidth:24}}>{Math.round((item.volume||1)*100)}%</span>
                 <button onClick={()=>{setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{background:"#e63946",border:"none",borderRadius:12,padding:"3px 9px",color:"#fff",fontFamily:"'Nunito',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>✕</button>
               </div>}
             </div>);
