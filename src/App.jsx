@@ -47,6 +47,10 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   useEffect(()=>{doodleWidthRef.current=doodleWidth;},[doodleWidth]);
   useEffect(()=>{doodlingRef.current=doodling;},[doodling]);
   useEffect(()=>{erasingRef.current=erasing;},[erasing]);
+  // Clean up tools when editing is turned off
+  useEffect(()=>{
+    if(!editing){setShowStickers(false);setShowNoteMenu(false);setShowPhotoMenu(false);setDoodling(false);setErasing(false);setCurrentPath(null);setSelected(null);}
+  },[editing]);
   const [view,setView]=useState({x:80,y:80,zoom:1});
   const [homeView,setHomeView]=useState(null);
   const [homeViewSet,setHomeViewSet]=useState(false);
@@ -1044,7 +1048,7 @@ export default function Pinwall(){
           <span className="logo-text" style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:22,letterSpacing:"-0.02em",color:"#fff",textShadow:"0 2px 6px rgba(0,0,0,0.4)"}}>Pinwall</span>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
-          <button onClick={()=>{if(editing){setShowStickers(false);setShowNoteMenu(false);setShowPhotoMenu(false);setDoodling(false);setErasing(false);setCurrentPath(null);setSelected(null);}setEditing(e=>!e);}} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontSize:12,fontFamily:"'Nunito',sans-serif",fontWeight:700,background:editing?"#2a9d8f":"rgba(30,30,30,0.85)",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.3)",gap:6}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
+          <button onClick={()=>setEditing(e=>!e)} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"8px 16px",borderRadius:24,border:"none",cursor:"pointer",fontSize:12,fontFamily:"'Nunito',sans-serif",fontWeight:700,background:editing?"#2a9d8f":"rgba(30,30,30,0.85)",color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,0.3)",gap:6}}>{editing?"✓ Done":"✏️ Edit wall"}</button>
           <div style={{position:"relative"}}>
             <button onClick={()=>{setMuted(m=>!m);setAudioHint(false);}} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:36,height:36,borderRadius:"50%",border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:15,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>{muted?"🔇":"🔊"}</button>
             {audioHint&&muted&&<div style={{position:"absolute",top:44,left:"50%",transform:"translateX(-50%)",background:"rgba(0,0,0,0.85)",borderRadius:10,padding:"8px 12px",whiteSpace:"nowrap",zIndex:200,boxShadow:"0 4px 12px rgba(0,0,0,0.3)"}}>
