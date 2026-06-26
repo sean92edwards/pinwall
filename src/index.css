@@ -31,6 +31,7 @@ html {
 body {
   overflow: auto;
   height: 100%;
+  background: #c6a06a;
 }
 
 #root {
