@@ -14,7 +14,10 @@ const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
 function HorizontalWall({session,muted,editing,setEditing,username}){
   const [items,setItems]=useState(session?[]:[]);
   useEffect(()=>{
-    if(!session){fetch('/demo-wall.json').then(r=>r.json()).then(data=>{if(data?.length)setItems(data);}).catch(()=>{});}
+    if(!session){fetch('/demo-wall.json').then(r=>r.json()).then(data=>{
+      if(Array.isArray(data)){if(data.length)setItems(data);}
+      else if(data?.items?.length){setItems(data.items);if(data.homeView)setView(data.homeView);}
+    }).catch(()=>{});}
   },[]);
   const [selected,setSelected]=useState(null);
   const [editingText,setEditingText]=useState(null);
@@ -1070,7 +1073,7 @@ export default function Pinwall(){
             </div>}
           </div>
           <div onClick={()=>supabase.auth.signOut()} style={{width:36,height:36,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:13,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
-          {session.user.email==='sean92edwards@gmail.com'&&<button onClick={async()=>{const{data}=await supabase.from('walls').select('items').eq('user_id',session.user.id).single();if(data?.items){const blob=new Blob([JSON.stringify(data.items)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='demo-wall.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);alert('Downloaded demo-wall.json ('+data.items.length+' items)');}}} style={{display:"inline-flex",alignItems:"center",padding:"6px 10px",borderRadius:16,border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,cursor:"pointer"}}>Export demo</button>}
+          {session.user.email==='sean92edwards@gmail.com'&&<button onClick={async()=>{const{data}=await supabase.from('walls').select('items').eq('user_id',session.user.id).single();if(data?.items){const homeView=JSON.parse(localStorage.getItem('pinwall_home_'+session.user.id)||'null');const exportData={items:data.items,homeView};const blob=new Blob([JSON.stringify(exportData)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='demo-wall.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);alert('Downloaded demo-wall.json ('+data.items.length+' items'+(homeView?' + home view':'')+')');}}} style={{display:"inline-flex",alignItems:"center",padding:"6px 10px",borderRadius:16,border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,cursor:"pointer"}}>Export demo</button>}
         </div>
       </div>
       <HorizontalWall session={session} muted={muted} editing={editing} setEditing={setEditing} username={username}/>
