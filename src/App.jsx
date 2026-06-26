@@ -687,7 +687,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
         {currentPath&&<svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:8,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
           <path d={currentPath} fill="none" stroke={doodleColor} strokeWidth={doodleWidth*1.5/view.zoom} strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
         </svg>}
-        <div className="zoom-controls" style={{position:"absolute",right:16,bottom:16,zIndex:60,display:"flex",alignItems:"center",gap:6,opacity:showZoom?1:0,transition:"opacity 0.4s ease",pointerEvents:showZoom?"auto":"none"}}>
+        <div className="zoom-controls" style={{position:"absolute",right:16,bottom:16,zIndex:60,display:isMobile?"none":"flex",alignItems:"center",gap:6,opacity:showZoom?1:0,transition:"opacity 1.5s ease",pointerEvents:showZoom?"auto":"none"}}>
           <button onClick={()=>zoomBy(1/1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>-</button>
           <div style={{minWidth:52,textAlign:"center",background:"rgba(44,38,32,0.85)",color:"#fff",borderRadius:9,padding:"7px 8px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700}}>{Math.round(zoom*100)}%</div>
           <button onClick={()=>zoomBy(1.25)} style={{width:32,height:32,borderRadius:9,border:"none",background:"rgba(44,38,32,0.85)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1}}>+</button>
