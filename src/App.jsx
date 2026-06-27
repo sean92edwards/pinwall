@@ -286,6 +286,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const lastTouchDist=useRef(null);
   const onTouchMoveWall=e=>{
     if(dragStart.current)return; // Item handler owns the touch
+    if(doodlePoints.current.length>0){e.preventDefault();return;} // Doodle handler owns the touch
     if(!panStart.current&&!lastTouchDist.current)return;
     e.preventDefault();
     if(e.touches.length===1&&panStart.current){
@@ -314,6 +315,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     if(dragStart.current)return;
     if(doodlingRef.current&&!erasingRef.current&&e.touches.length===1){
       // Start doodle on touch
+      e.preventDefault();
       const t=e.touches[0];
       const r=rectOf();const v=viewRef.current;
       const wx=(t.clientX-(r?.left||0)-v.x)/v.zoom;
