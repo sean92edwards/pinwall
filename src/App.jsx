@@ -621,7 +621,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
           <button onClick={()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'markertext',text:"",cx:c.x,cy:c.y,rot:0,color:doodleColorRef.current,scale:1,zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setDoodling(false);setEditing(true);setSelected(id);setEditingText(id);}} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:12,padding:"3px 10px",color:"#fff",fontFamily:"'Permanent Marker',sans-serif",fontSize:10,fontWeight:700,cursor:"pointer"}}>Aa Text</button>
         </div>}
       </div>}
-      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,minHeight:"calc(100lvh + 60px)",position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",background:"#c6a06a",backgroundImage:`radial-gradient(ellipse 120% 90% at 50% -5%,rgba(255,244,222,0.35) 0%,transparent 55%),radial-gradient(ellipse at 88% 108%,rgba(110,78,42,0.32) 0%,transparent 50%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='cork'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23cork)' opacity='0.4'/%3E%3C/svg%3E")`,backgroundSize:"100% 100%,100% 100%,150px 150px",userSelect:"none"}}>
+      <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",background:"#c6a06a",backgroundImage:`radial-gradient(ellipse 120% 90% at 50% -5%,rgba(255,244,222,0.35) 0%,transparent 55%),radial-gradient(ellipse at 88% 108%,rgba(110,78,42,0.32) 0%,transparent 50%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='cork'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23cork)' opacity='0.4'/%3E%3C/svg%3E")`,backgroundSize:"100% 100%,100% 100%,150px 150px",userSelect:"none"}}>
       <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 90px rgba(0,0,0,0.22)",pointerEvents:"none",zIndex:5}}/>
         <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,pointerEvents:(doodling&&!erasing)?"none":"auto"}}>
           {sorted.map(item=>{
@@ -913,19 +913,6 @@ export default function Pinwall(){
   const [shareCopied,setShareCopied]=useState(false);
   const [muted,setMuted]=useState(true);
   const [audioHint,setAudioHint]=useState(true);
-  // iOS standalone PWAs occasionally fail to lay out position:fixed elements
-  // correctly on cold launch (a known WebKit quirk). Normally a native page
-  // scroll forces a relayout and fixes it, but Pinwall's wall pans/zooms via
-  // its own transform instead of real page scrolling, so that never happens
-  // on its own. A tiny, invisible scroll nudge right after mount forces the
-  // same relayout WebKit would otherwise do for you.
-  useEffect(()=>{
-    if(window.navigator.standalone){
-      window.scrollTo(0,1);
-      const t=setTimeout(()=>window.scrollTo(0,0),300);
-      return()=>clearTimeout(t);
-    }
-  },[]);
   useEffect(()=>{
     const onInteract=()=>{setTimeout(()=>setAudioHint(false),5000);window.removeEventListener('touchstart',onInteract);window.removeEventListener('mousedown',onInteract);window.removeEventListener('wheel',onInteract);};
     window.addEventListener('touchstart',onInteract,{once:true});window.addEventListener('mousedown',onInteract,{once:true});window.addEventListener('wheel',onInteract,{once:true});
@@ -1111,7 +1098,7 @@ export default function Pinwall(){
 
   if(demoMode){
     return(
-      <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
+      <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",height:"100%"}}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}@media(max-width:768px){.wall-toolbar{padding:6px 10px!important;bottom:60px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:0!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.wall-toolbar .tb-pill button,.wall-toolbar .tb-pill label{font-size:0!important}.wall-toolbar .tb-pill button span,.wall-toolbar .tb-pill label span{font-size:14px!important}.photo-modal{flex-direction:column!important}.photo-modal-img{min-height:55vh!important}.photo-modal-comments{width:100%!important;max-height:40vh!important}.photo-modal-close{top:10px!important;right:10px!important}}`}</style>
         <div style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"calc(16px + env(safe-area-inset-top)) 20px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
@@ -1143,7 +1130,7 @@ export default function Pinwall(){
   );
 
   return(
-    <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
+    <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",height:"100%"}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:auto!important;padding:6px 8px!important}.pinwall-nav .logo-text{font-size:16px!important}.pinwall-nav button{padding:5px 10px!important;font-size:10px!important}.pinwall-nav .nav-circle{width:30px!important;height:30px!important;font-size:12px!important}.zoom-controls{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:0!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.wall-toolbar .tb-pill button,.wall-toolbar .tb-pill label{font-size:0!important}.wall-toolbar .tb-pill button span,.wall-toolbar .tb-pill label span{font-size:14px!important}.wall-toolbar{bottom:60px!important}.photo-modal-img{min-height:55vh!important}.photo-modal-comments{width:100%!important;max-height:40vh!important}.photo-modal-close{top:10px!important;right:10px!important}.photo-modal{flex-direction:column!important}.export-btn{display:none!important}}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
       <div className="pinwall-nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:300,padding:"calc(16px + env(safe-area-inset-top)) 20px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
         <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
