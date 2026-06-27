@@ -571,7 +571,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   return(
     <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column"}}>
       {homeToast&&<div style={{position:"absolute",bottom:80,left:"50%",transform:"translateX(-50%)",zIndex:300,background:"rgba(0,0,0,0.8)",color:"#fff",borderRadius:20,padding:"8px 18px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,animation:"slideUp 0.2s ease"}}>Home view set ✓</div>}
-      {editing&&<div className="wall-toolbar" style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:200,display:"flex",alignItems:"center",gap:8,animation:"slideUp 0.2s ease"}}>
+      {editing&&<div className="wall-toolbar" style={{position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom))",left:"50%",transform:"translateX(-50%)",zIndex:200,display:"flex",alignItems:"center",gap:8,animation:"slideUp 0.2s ease"}}>
         <div className="tb-pill" style={{display:"flex",alignItems:"center",gap:2,background:"rgba(255,253,248,0.97)",borderRadius:30,padding:6,border:"1px solid #e0d5c0",boxShadow:"0 4px 20px rgba(0,0,0,0.18)",backdropFilter:"blur(8px)"}}>
           <div style={{position:"relative"}}>
             <button onClick={()=>{setShowPhotoMenu(s=>!s);setShowStickers(false);setShowNoteMenu(false);setDoodling(false);setErasing(false);}} className="tb-btn" style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 15px",borderRadius:24,border:"none",background:showPhotoMenu?"#ece4d4":"transparent",fontFamily:"'Nunito',sans-serif",fontSize:13,fontWeight:700,color:"#3a3327",cursor:uploading?"default":"pointer",opacity:uploading?0.55:1}} onMouseEnter={e=>{if(!showPhotoMenu)e.currentTarget.style.background="#ece4d4";}} onMouseLeave={e=>{if(!showPhotoMenu)e.currentTarget.style.background="transparent";}}>
@@ -642,7 +642,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             if(lod==='low'&&item.type!=='doodle'&&item.type!=='markertext'){
               const w=item.type==='sticker'?(item.size||44):(item.type==='bubble'?150*(item.scale||1):(item.w||148));
               const h=item.type==='sticker'?(item.size||44):(item.type==='bubble'?70*(item.scale||1):(item.h||148));
-              const col=item.type==='sticker'?({"💖":"#ff69b4","⭐":"#ffd700","✨":"#ffd700","🌟":"#ffd700","💫":"#ffd700","🎉":"#ff6b35","🥂":"#ffd700","🍾":"#2a9d8f","👑":"#ffd700","🎀":"#ff69b4","💎":"#87ceeb","🦋":"#7b68ee","🌸":"#ffb6c8","🎈":"#e63946","🎊":"#ff6b35","💝":"#ff69b4","⚡":"#ffd700","🔥":"#ff6b35","💕":"#ff69b4","💜":"#9b59b6","💛":"#ffd700","🤍":"#ffffff","😂":"#ffd700","😍":"#ffd700","🥳":"#ffd700","😭":"#ffd700","🤩":"#ffd700","😎":"#ffd700","🥰":"#ffd700","😅":"#ffd700","🙌":"#ffd700","👏":"#ffd700","💋":"#e63946","🎂":"#ff69b4","🍰":"#fde8c8","🧃":"#ff6b35","🏆":"#ffd700","🎁":"#e63946","🎶":"#9b59b6","🎵":"#9b59b6"}[item.emoji]||"#e6c25c"):(item.color||"#ffffff");
+              const col=item.type==='sticker'?"#e6c25c":(item.color||"#ffffff");
               return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,background:col,borderRadius:item.type==='sticker'?"50%":6,zIndex:item.zIndex||1,boxShadow:"0 6px 14px rgba(0,0,0,0.18)"}}/>);
             }
             if(item.type==='sticker')return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"default",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}}}><div style={{fontSize:item.size||44,lineHeight:1,filter:"drop-shadow(1px 3px 6px rgba(0,0,0,0.22))"}}>{item.emoji}</div>{isSel&&lod==='full'&&<><div style={{position:"absolute",inset:-5,border:"1.5px dashed rgba(74,144,226,0.65)",borderRadius:6,pointerEvents:"none"}}/><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}/><div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}</div>);
@@ -913,6 +913,19 @@ export default function Pinwall(){
   const [shareCopied,setShareCopied]=useState(false);
   const [muted,setMuted]=useState(true);
   const [audioHint,setAudioHint]=useState(true);
+  // iOS standalone PWAs occasionally fail to lay out position:fixed elements
+  // correctly on cold launch (a known WebKit quirk). Normally a native page
+  // scroll forces a relayout and fixes it, but Pinwall's wall pans/zooms via
+  // its own transform instead of real page scrolling, so that never happens
+  // on its own. A tiny, invisible scroll nudge right after mount forces the
+  // same relayout WebKit would otherwise do for you.
+  useEffect(()=>{
+    if(window.navigator.standalone){
+      window.scrollTo(0,1);
+      const t=setTimeout(()=>window.scrollTo(0,0),300);
+      return()=>clearTimeout(t);
+    }
+  },[]);
   useEffect(()=>{
     const onInteract=()=>{setTimeout(()=>setAudioHint(false),5000);window.removeEventListener('touchstart',onInteract);window.removeEventListener('mousedown',onInteract);window.removeEventListener('wheel',onInteract);};
     window.addEventListener('touchstart',onInteract,{once:true});window.addEventListener('mousedown',onInteract,{once:true});window.addEventListener('wheel',onInteract,{once:true});
@@ -1100,7 +1113,7 @@ export default function Pinwall(){
     return(
       <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}@media(max-width:768px){.wall-toolbar{padding:6px 10px!important;bottom:60px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:0!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.wall-toolbar .tb-pill button,.wall-toolbar .tb-pill label{font-size:0!important}.wall-toolbar .tb-pill button span,.wall-toolbar .tb-pill label span{font-size:14px!important}.photo-modal{flex-direction:column!important}.photo-modal-img{min-height:55vh!important}.photo-modal-comments{width:100%!important;max-height:40vh!important}.photo-modal-close{top:10px!important;right:10px!important}}`}</style>
-        <div style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
+        <div style={{position:"fixed",top:0,left:0,right:0,zIndex:100,padding:"calc(16px + env(safe-area-inset-top)) 20px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
           <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
             <span style={{fontSize:22,lineHeight:1,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>📌</span>
             <span style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:22,letterSpacing:"-0.02em",color:"#fff",textShadow:"0 2px 6px rgba(0,0,0,0.4)"}}>Pinwall Demo</span>
@@ -1132,7 +1145,7 @@ export default function Pinwall(){
   return(
     <div style={{fontFamily:"'Nunito',sans-serif",background:"#f3ead9",minHeight:"100vh"}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:auto!important;padding:6px 8px!important}.pinwall-nav .logo-text{font-size:16px!important}.pinwall-nav button{padding:5px 10px!important;font-size:10px!important}.pinwall-nav .nav-circle{width:30px!important;height:30px!important;font-size:12px!important}.zoom-controls{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:0!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.wall-toolbar .tb-pill button,.wall-toolbar .tb-pill label{font-size:0!important}.wall-toolbar .tb-pill button span,.wall-toolbar .tb-pill label span{font-size:14px!important}.wall-toolbar{bottom:60px!important}.photo-modal-img{min-height:55vh!important}.photo-modal-comments{width:100%!important;max-height:40vh!important}.photo-modal-close{top:10px!important;right:10px!important}.photo-modal{flex-direction:column!important}.export-btn{display:none!important}}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
-      <div className="pinwall-nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:300,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
+      <div className="pinwall-nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:300,padding:"calc(16px + env(safe-area-inset-top)) 20px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
         <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
           <span style={{fontSize:22,lineHeight:1,filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>📌</span>
           <span className="logo-text" style={{fontFamily:"'Nunito',sans-serif",fontWeight:900,fontSize:22,letterSpacing:"-0.02em",color:"#fff",textShadow:"0 2px 6px rgba(0,0,0,0.4)"}}>Pinwall</span>
