@@ -505,7 +505,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const margin=isMobile?100:200;
   const wL=(0-view.x)/zoom-margin,wT=(0-view.y)/zoom-margin;
   const wR=(vp.w-view.x)/zoom+margin,wB=(vp.h-view.y)/zoom+margin;
-  const itemHalf=it=>{if(it.type==='sticker')return(it.size||44);if(it.type==='bubble'||it.type==='speech')return 170;if(it.type==='doodle')return Math.max(it.w||100,it.h||100)/2;if(it.type==='markertext')return 300;return Math.max(it.w||148,it.h||148);};
+  const itemHalf=it=>{if(it.type==='sticker')return(it.size||44)/2;if(it.type==='bubble'||it.type==='speech')return 85;if(it.type==='doodle')return Math.max(it.w||100,it.h||100)/2;if(it.type==='markertext')return 150;return Math.max(it.w||148,it.h||148)/2;};
   const visible=items.filter(it=>{const h=itemHalf(it);return it.cx+h>=wL&&it.cx-h<=wR&&it.cy+h>=wT&&it.cy-h<=wB;});
   const sorted=[...visible].sort((a,b)=>(a.zIndex||1)-(b.zIndex||1));
 
@@ -696,11 +696,11 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             return null;
           })}
         </div>
-        <svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:erasing?"auto":"none",zIndex:6,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
+        {lod==='full'&&<svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:erasing?"auto":"none",zIndex:6,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
           {items.filter(i=>i.type==='doodle').filter(it=>{const h=Math.max(it.w||100,it.h||100)/2;return it.cx+h>=wL&&it.cx-h<=wR&&it.cy+h>=wT&&it.cy-h<=wB;}).map(item=>(
             <path key={item.id} d={item.path} fill="none" stroke={item.color||"#1a1a1a"} strokeWidth={(item.strokeWidth||3)*1.5} strokeLinecap="round" strokeLinejoin="round" opacity="0.9" transform={`translate(${item.cx-item.w/2},${item.cy-item.h/2})`} onClick={erasing?()=>setItems(p=>p.filter(i=>i.id!==item.id)):undefined} style={{cursor:erasing?"crosshair":"default",pointerEvents:erasing?"auto":"none"}}/>
           ))}
-        </svg>
+        </svg>}
         {editing&&<div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,zIndex:9,pointerEvents:"auto"}}>
           {items.filter(i=>i.type==='audio').map(item=>{
             const isSel=editing&&selected===item.id;
