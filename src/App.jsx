@@ -570,7 +570,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   },[items,view,vp,muted]);
 
   return(
-    <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",top:0,left:0,right:0,height:"100vh",display:"flex",flexDirection:"column"}}>
       {homeToast&&<div style={{position:"absolute",bottom:80,left:"50%",transform:"translateX(-50%)",zIndex:300,background:"rgba(0,0,0,0.8)",color:"#fff",borderRadius:20,padding:"8px 18px",fontFamily:"'Nunito',sans-serif",fontSize:12,fontWeight:700,animation:"slideUp 0.2s ease"}}>Home view set ✓</div>}
       {editing&&<div className="wall-toolbar" style={{position:"fixed",bottom:"calc(24px + env(safe-area-inset-bottom))",left:"50%",transform:"translateX(-50%)",zIndex:200,display:"flex",alignItems:"center",gap:8,animation:"slideUp 0.2s ease"}}>
         <div className="tb-pill" style={{display:"flex",alignItems:"center",gap:2,background:"rgba(255,253,248,0.97)",borderRadius:30,padding:6,border:"1px solid #e0d5c0",boxShadow:"0 4px 20px rgba(0,0,0,0.18)",backdropFilter:"blur(8px)"}}>
@@ -1137,7 +1137,7 @@ export default function Pinwall(){
   );
 
   return(
-    <div style={{fontFamily:"'Nunito',sans-serif",background:"#c6a06a",height:"100%",position:"fixed",inset:0}}>
+    <div style={{fontFamily:"'Nunito',sans-serif",background:"#c6a06a",position:"fixed",top:0,left:0,right:0,height:"100vh"}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Permanent+Marker&display=swap');*{box-sizing:border-box;margin:0;padding:0;}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}@media(max-width:768px){.pinwall-nav{height:auto!important;padding:calc(14px + env(safe-area-inset-top, 20px)) 8px 6px!important}.pinwall-nav .logo-text{font-size:16px!important}.pinwall-nav button{padding:5px 10px!important;font-size:10px!important}.pinwall-nav .nav-circle{width:30px!important;height:30px!important;font-size:12px!important}.zoom-controls{display:none!important}.wall-toolbar{padding:6px 10px!important}.wall-toolbar .tb-pill{padding:3px!important;gap:0!important}.wall-toolbar .tb-btn{padding:5px 8px!important;font-size:0!important;gap:4px!important}.wall-toolbar .tb-btn span{font-size:12px!important}.wall-toolbar .tb-pill>div>button,.wall-toolbar .tb-pill>div>label,.wall-toolbar .tb-pill>button,.wall-toolbar .tb-pill>label{font-size:0!important}.wall-toolbar .tb-pill>div>button span,.wall-toolbar .tb-pill>div>label span,.wall-toolbar .tb-pill>button span,.wall-toolbar .tb-pill>label span{font-size:14px!important}.wall-toolbar{bottom:calc(24px + env(safe-area-inset-bottom))!important}.photo-modal-img{min-height:55vh!important}.photo-modal-comments{width:100%!important;max-height:40vh!important}.photo-modal-close{top:10px!important;right:10px!important}.photo-modal{flex-direction:column!important}.export-btn{display:none!important}}@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`}</style>
       <div className="pinwall-nav" style={{position:"fixed",top:0,left:0,right:0,zIndex:300,padding:"calc(16px + env(safe-area-inset-top, 20px)) 20px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",pointerEvents:"none"}}>
         <div style={{display:"flex",alignItems:"center",gap:8,pointerEvents:"auto"}}>
