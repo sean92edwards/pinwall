@@ -8,6 +8,33 @@ const STICKERS = ["\u{1F496}","⭐","\u2728","\u{1F31F}","\u{1F4AB}","\u{1F389}"
 const BUBBLE_COLORS = ["#ffb6c8","#fff9c4","#c8e6ff","#d4f0c8","#e8d4f5","#fde8c8","#ffffff","#ffc0cb","#f0e68c","#b2dfdb","#ffccbc","#d1c4e9","#f8bbd0","#c5cae9","#dcedc8","#ffe0b2"];
 
 
+// Generates a tiny, blurred placeholder image for the far-zoom LOD tier.
+// When bordered=true, a white polaroid-style frame is baked directly into
+// the image (matching the ~5/5/30px card padding used at full zoom), so the
+// border survives the LOD swap instead of disappearing into a flat color box.
+// img must already be a loaded HTMLImageElement (naturalWidth/naturalHeight set).
+function makeLodThumb(img,bordered){
+  return new Promise(resolve=>{
+    try{
+      const targetLong=70;
+      const ratio=(img.naturalWidth||img.width||1)/(img.naturalHeight||img.height||1)||1;
+      const cw=Math.max(8,Math.round(ratio>=1?targetLong:targetLong*ratio));
+      const ch=Math.max(8,Math.round(ratio>=1?targetLong/ratio:targetLong));
+      const bx=bordered?Math.max(2,Math.round(cw*0.05)):0;
+      const bt=bordered?Math.max(2,Math.round(ch*0.05)):0;
+      const bb=bordered?Math.max(6,Math.round(ch*0.22)):0;
+      const canvas=document.createElement('canvas');
+      canvas.width=cw+bx*2;canvas.height=ch+bt+bb;
+      const ctx=canvas.getContext('2d');
+      if(bordered){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);}
+      try{ctx.filter='blur(2px)';}catch(e){}
+      ctx.drawImage(img,bx,bt,cw,ch);
+      ctx.filter='none';
+      canvas.toBlob(blob=>resolve({blob,w:canvas.width,h:canvas.height}),'image/webp',0.7);
+    }catch(e){console.error('makeLodThumb failed:',e);resolve({blob:null,w:0,h:0});}
+  });
+}
+
 function hdl(pos){const b={position:"absolute",zIndex:10,background:"#4a90e2",cursor:"grab",display:"flex",alignItems:"center",justifyContent:"center",color:"white",boxShadow:"0 1px 6px rgba(0,0,0,0.3)",border:"2px solid white"};if(pos==="top")return{...b,top:-30,left:"50%",transform:"translateX(-50%)",width:24,height:24,borderRadius:"50%",fontSize:14};if(pos==="br")return{...b,bottom:-5,right:-5,width:20,height:20,borderRadius:5,fontSize:11,cursor:"se-resize"};}
 const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
 
@@ -369,12 +396,21 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       const{data:{publicUrl}}=supabase.storage.from('photos').getPublicUrl(fileName);
       const resultImg=new Image();
       const objectUrl=URL.createObjectURL(resultBlob);
-      resultImg.onload=()=>{
+      resultImg.onload=async()=>{
         URL.revokeObjectURL(objectUrl);
         const maxDim=200;const ratio=resultImg.width/resultImg.height;
         const w=Math.max(100,ratio>=1?maxDim:maxDim*ratio);
         const h=Math.max(100,ratio>=1?maxDim/ratio:maxDim);
-        setItems(p=>[{id:Date.now(),type:'cutout',url:publicUrl,cx:item.cx+120,cy:item.cy,rot:0,w,h,zIndex:maxZ+1},...p]);
+        let lodThumbUrl=null;
+        try{
+          const{blob:thumbBlob}=await makeLodThumb(resultImg,false);
+          if(thumbBlob){
+            const thumbName=`${session.user.id}/thumbs/${Date.now()}_cutout.webp`;
+            const{error:thumbErr}=await supabase.storage.from('photos').upload(thumbName,thumbBlob,{contentType:'image/webp'});
+            if(!thumbErr)lodThumbUrl=supabase.storage.from('photos').getPublicUrl(thumbName).data.publicUrl;
+          }
+        }catch(e){console.error('Cutout thumbnail failed:',e);}
+        setItems(p=>[{id:Date.now(),type:'cutout',url:publicUrl,lodThumb:lodThumbUrl,cx:item.cx+120,cy:item.cy,rot:0,w,h,zIndex:maxZ+1},...p]);
         setMaxZ(z=>z+1);setCuttingOut(false);
       };
       resultImg.onerror=()=>{URL.revokeObjectURL(objectUrl);setCuttingOut(false);};
@@ -398,16 +434,11 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     setUploading(true);
     const fileName=`${session.user.id}/${Date.now()}.${fileExt}`;
     const thumbName=`${session.user.id}/thumbs/${Date.now()}.webp`;
-    // Generate thumbnail
+    const bordered=photoModeRef.current!=='frameless';
+    // Generate tiny blurred LOD thumbnail (white polaroid border baked in if applicable)
     const thumbBlob=await new Promise(resolve=>{
       const img=new Image();
-      img.onload=()=>{
-        const max=400;const ratio=img.width/img.height;
-        const w=ratio>=1?max:max*ratio;const h=ratio>=1?max/ratio:max;
-        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
-        const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);
-        canvas.toBlob(b=>resolve(b),'image/webp',0.7);
-      };
+      img.onload=()=>{makeLodThumb(img,bordered).then(({blob})=>resolve(blob)).catch(()=>resolve(null));};
       img.onerror=()=>resolve(null);
       img.src=URL.createObjectURL(file);
     });
@@ -415,11 +446,11 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     const{error}=await supabase.storage.from('photos').upload(fileName,file);
     if(error){console.error('Upload error:',error);setUploading(false);return;}
     const{data:{publicUrl}}=supabase.storage.from('photos').getPublicUrl(fileName);
-    // Upload thumbnail
-    let thumbUrl=publicUrl;
+    // Upload LOD thumbnail
+    let lodThumbUrl=null;
     if(thumbBlob){
       const{error:thumbErr}=await supabase.storage.from('photos').upload(thumbName,thumbBlob,{contentType:'image/webp'});
-      if(!thumbErr){thumbUrl=supabase.storage.from('photos').getPublicUrl(thumbName).data.publicUrl;}
+      if(!thumbErr){lodThumbUrl=supabase.storage.from('photos').getPublicUrl(thumbName).data.publicUrl;}
     }
     const c=centerWorld();
     const objectUrl=URL.createObjectURL(file);
@@ -440,7 +471,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       const sorted=Object.entries(buckets).sort((a,b)=>b[1]-a[1]);
       const topColors=sorted.slice(0,3).map(([k])=>`rgb(${k})`);
       const dominantColor=topColors[0]||'#d8cdb8';
-      setItems(p=>[{id:Date.now(),type:photoModeRef.current==='frameless'?'cutout':'photo',url:publicUrl,thumb:thumbUrl,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*12,w,h,zIndex:maxZ+1,dominantColor,topColors},...p]);
+      setItems(p=>[{id:Date.now(),type:photoModeRef.current==='frameless'?'cutout':'photo',url:publicUrl,lodThumb:lodThumbUrl,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*12,w,h,zIndex:maxZ+1,dominantColor,topColors},...p]);
       setMaxZ(z=>z+1);setUploading(false);
     };
     img.onerror=()=>{URL.revokeObjectURL(objectUrl);setUploading(false);};
@@ -600,9 +631,13 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
               return null; // Audio rendered separately on top
             }
             if(lod==='low'&&(item.type==='photo'||item.type==='polaroid'||item.type==='cutout')&&item.url){
-              const w=item.w||148;const h=item.h||148;
+              const bordered=item.type==='photo'||item.type==='polaroid';
+              const w=item.w||148;const h=(item.h||148)+(bordered?35:0);
+              if(item.lodThumb){
+                return(<img key={item.id} src={item.lodThumb} decoding="async" style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,borderRadius:4,zIndex:item.zIndex||1,boxShadow:"0 4px 10px rgba(0,0,0,0.15)"}} alt=""/>);
+              }
               const col=item.dominantColor||'#d8cdb8';
-              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:w,height:h,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,borderRadius:4,zIndex:item.zIndex||1,boxShadow:"0 4px 10px rgba(0,0,0,0.15)",background:col}}/>);
+              return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,width:item.w||148,height:item.h||148,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,borderRadius:4,zIndex:item.zIndex||1,boxShadow:"0 4px 10px rgba(0,0,0,0.15)",background:col}}/>);
             }
             if(lod==='low'&&item.type!=='doodle'&&item.type!=='markertext'){
               const w=item.type==='sticker'?(item.size||44):(item.type==='bubble'?150*(item.scale||1):(item.w||148));
@@ -896,6 +931,8 @@ export default function Pinwall(){
   const [searchQuery,setSearchQuery]=useState("");
   const [searchResults,setSearchResults]=useState([]);
   const [searching,setSearching]=useState(false);
+  const [generatingThumbs,setGeneratingThumbs]=useState(false);
+  const [thumbProgress,setThumbProgress]=useState("");
 
   // Check if we're loading a shared wall from URL
   useEffect(()=>{
@@ -983,6 +1020,52 @@ export default function Pinwall(){
     await navigator.clipboard.writeText(url);
     setShareCopied(true);
     setTimeout(()=>setShareCopied(false),2500);
+  };
+
+  // Scans the signed-in user's wall for photos/cutouts that don't yet have a
+  // pre-baked LOD thumbnail (older items, uploaded before this feature existed)
+  // and generates+uploads one for each, then saves the wall.
+  const generateMissingThumbs=async()=>{
+    if(!session?.user||generatingThumbs)return;
+    setGeneratingThumbs(true);
+    setThumbProgress("Loading wall…");
+    try{
+      const{data,error}=await supabase.from('walls').select('items').eq('user_id',session.user.id).single();
+      if(error||!data?.items){alert('Could not load your wall.');setGeneratingThumbs(false);setThumbProgress("");return;}
+      const items=data.items;
+      const targets=items.filter(it=>(it.type==='photo'||it.type==='polaroid'||it.type==='cutout')&&it.url&&!it.lodThumb);
+      if(targets.length===0){
+        alert('All your photos already have thumbnails!');
+        setGeneratingThumbs(false);setThumbProgress("");return;
+      }
+      let done=0,failed=0;
+      for(const it of targets){
+        setThumbProgress(`Generating thumbnail ${done+failed+1} of ${targets.length}…`);
+        try{
+          const img=new Image();
+          img.crossOrigin='anonymous';
+          const loaded=new Promise((res,rej)=>{img.onload=res;img.onerror=rej;});
+          img.src=it.url;
+          await loaded;
+          const bordered=it.type==='photo'||it.type==='polaroid';
+          const{blob}=await makeLodThumb(img,bordered);
+          if(blob){
+            const thumbName=`${session.user.id}/thumbs/backfill_${it.id}_${Date.now()}.webp`;
+            const{error:upErr}=await supabase.storage.from('photos').upload(thumbName,blob,{contentType:'image/webp'});
+            if(!upErr){it.lodThumb=supabase.storage.from('photos').getPublicUrl(thumbName).data.publicUrl;done++;}
+            else failed++;
+          } else failed++;
+        }catch(e){console.error('Thumbnail failed for item',it.id,e);failed++;}
+      }
+      setThumbProgress("Saving…");
+      const{error:saveErr}=await supabase.from('walls').upsert({user_id:session.user.id,items},{onConflict:'user_id'});
+      if(saveErr)alert('Generated thumbnails but failed to save: '+saveErr.message);
+      else alert(`Done! Generated ${done} thumbnail(s)${failed?`, ${failed} failed`:""}. Refresh your wall to see them.`);
+    }catch(e){
+      console.error('Thumbnail backfill error:',e);
+      alert('Something went wrong generating thumbnails.');
+    }
+    setGeneratingThumbs(false);setThumbProgress("");
   };
 
   // Shared wall view
@@ -1085,6 +1168,7 @@ export default function Pinwall(){
             </div>}
           </div>
           <div className="nav-circle" onClick={()=>{window.__pinwall_view_applied=false;supabase.auth.signOut();}} style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:12,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
+          {session?.user&&<button className="export-btn" disabled={generatingThumbs} onClick={generateMissingThumbs} title="Scans your wall for photos without a low-zoom thumbnail and generates one" style={{display:"inline-flex",alignItems:"center",padding:"6px 10px",borderRadius:16,border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,cursor:generatingThumbs?"default":"pointer",opacity:generatingThumbs?0.6:1,whiteSpace:"nowrap"}}>{generatingThumbs?(thumbProgress||"Generating…"):"🖼️ Generate Thumbnails"}</button>}
           {session.user.email==='sean92edwards@gmail.com'&&<button className="export-btn" onClick={async()=>{const{data}=await supabase.from('walls').select('items').eq('user_id',session.user.id).single();if(data?.items){const homeView=JSON.parse(localStorage.getItem('pinwall_home_view')||'null');const exportData={items:data.items,homeView};const blob=new Blob([JSON.stringify(exportData)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='demo-wall.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);alert('Downloaded demo-wall.json ('+data.items.length+' items'+(homeView?' + home view':'')+')');}}} style={{display:"inline-flex",alignItems:"center",padding:"6px 10px",borderRadius:16,border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,cursor:"pointer"}}>Export demo</button>}
         </div>
       </div>
