@@ -502,7 +502,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const zoom=view.zoom;
   const isMobile=vp.w<=768;
   const isPortrait=vp.h>vp.w;
-  const lod=zoom>=(isMobile?0.25:0.30)?'full':'low';
+  const lod=zoom>=(isMobile?0.12:0.30)?'full':'low';
   const margin=isMobile?(isPortrait?3000:2000):400;
   const wL=(0-view.x)/zoom-margin,wT=(0-view.y)/zoom-margin;
   const wR=(vp.w-view.x)/zoom+margin,wB=(vp.h-view.y)/zoom+margin;
@@ -515,7 +515,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const audioFade=useRef(1);
   const audioFadeInterval=useRef(null);
   useEffect(()=>{
-    const lodThreshold=isMobile?0.25:0.30;
+    const lodThreshold=isMobile?0.12:0.30;
     if(view.zoom<lodThreshold){
       // Start fading out over 2 seconds if not already
       if(!audioFadeInterval.current&&audioFade.current>0){
