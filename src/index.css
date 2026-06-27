@@ -41,7 +41,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 100vh;
+  height: var(--app-height, 100vh);
   display: flex;
   flex-direction: column;
   overflow: hidden;
