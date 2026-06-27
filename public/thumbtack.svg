@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#f7f0e2"/>
+      <stop offset="100%" stop-color="#ead9bd"/>
+    </radialGradient>
+    <radialGradient id="head" cx="38%" cy="32%" r="72%">
+      <stop offset="0%" stop-color="#ff7a72"/>
+      <stop offset="45%" stop-color="#e63946"/>
+      <stop offset="100%" stop-color="#b21e2b"/>
+    </radialGradient>
+    <linearGradient id="pin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e9edf0"/>
+      <stop offset="45%" stop-color="#aab2b8"/>
+      <stop offset="100%" stop-color="#6f777d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded background (safe for maskable) -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- soft drop shadow under pin -->
+  <ellipse cx="262" cy="372" rx="120" ry="34" fill="#000000" opacity="0.10"/>
+
+  <!-- metal needle pointing down-right -->
+  <path d="M300 300 L372 414 L356 426 Z" fill="url(#pin)" stroke="#5c6368" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- pin collar -->
+  <rect x="236" y="250" width="60" height="52" rx="16" transform="rotate(35 266 276)" fill="url(#pin)" stroke="#5c6368" stroke-width="3"/>
+
+  <!-- red head -->
+  <circle cx="222" cy="208" r="132" fill="url(#head)" stroke="#9c1822" stroke-width="4"/>
+
+  <!-- inner dimple ring -->
+  <circle cx="222" cy="208" r="92" fill="none" stroke="#9c1822" stroke-width="6" opacity="0.35"/>
+  <circle cx="222" cy="208" r="30" fill="#9c1822" opacity="0.45"/>
+
+  <!-- glossy highlight -->
+  <ellipse cx="180" cy="160" rx="52" ry="38" fill="#ffffff" opacity="0.45" transform="rotate(-25 180 160)"/>
+</svg>
