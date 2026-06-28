@@ -36,8 +36,70 @@ function makeLodThumb(img,bordered){
   });
 }
 
+// Generates the mid-tier "wall" thumbnail: a properly downscaled, sharp
+// (not blurred) WebP used for normal on-wall viewing at full zoom. This is
+// NOT bordered — the existing polaroid frame is still drawn by the
+// surrounding div, so this just needs to be a small, fast-loading version
+// of the photo itself. Full-res `url` is reserved for the photo viewer.
+// img must already be a loaded HTMLImageElement (naturalWidth/naturalHeight set).
+function makeWallThumb(img){
+  return new Promise(resolve=>{
+    try{
+      const targetLong=520;
+      const nw=img.naturalWidth||img.width||1;
+      const nh=img.naturalHeight||img.height||1;
+      const ratio=nw/nh||1;
+      // Don't upscale small images past their native size
+      const longSide=Math.min(targetLong,Math.max(nw,nh));
+      const cw=Math.max(8,Math.round(ratio>=1?longSide:longSide*ratio));
+      const ch=Math.max(8,Math.round(ratio>=1?longSide/ratio:longSide));
+      const canvas=document.createElement('canvas');
+      canvas.width=cw;canvas.height=ch;
+      const ctx=canvas.getContext('2d');
+      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingQuality='high';
+      ctx.drawImage(img,0,0,cw,ch);
+      canvas.toBlob(blob=>resolve({blob,w:cw,h:ch}),'image/webp',0.82);
+    }catch(e){console.error('makeWallThumb failed:',e);resolve({blob:null,w:0,h:0});}
+  });
+}
+
 function hdl(pos){const b={position:"absolute",zIndex:10,background:"#4a90e2",cursor:"grab",display:"flex",alignItems:"center",justifyContent:"center",color:"white",boxShadow:"0 1px 6px rgba(0,0,0,0.3)",border:"2px solid white"};if(pos==="top")return{...b,top:-30,left:"50%",transform:"translateX(-50%)",width:24,height:24,borderRadius:"50%",fontSize:14};if(pos==="br")return{...b,bottom:-5,right:-5,width:20,height:20,borderRadius:5,fontSize:11,cursor:"se-resize"};}
 const PIN_COLORS=["#e63946","#2a9d8f","#e9c46a","#a8dadc","#e76f51","#457b9d"];
+
+// Renders a photo at on-wall ("full" LOD, not zoomed into the viewer) using
+// the wall-tier thumbnail when available, falling back to the full-res url
+// for older items that haven't been backfilled yet.
+function WallImg({item,style,alt}){
+  const src=item.wallThumb||item.url;
+  return <img src={src} decoding="async" style={style} alt={alt||""}/>;
+}
+
+// Photo viewer image: shows the wall-tier (or LOD) thumbnail instantly as a
+// placeholder, then swaps to the full-res image once it's loaded — a
+// blur-up style transition so the viewer never looks broken/empty while the
+// full image downloads.
+function ViewerImg({item,style,onClick}){
+  const placeholder=item.wallThumb||item.lodThumb||item.url;
+  const [loaded,setLoaded]=useState(false);
+  const [src,setSrc]=useState(placeholder);
+  useEffect(()=>{
+    setLoaded(false);
+    setSrc(placeholder);
+    if(!item.url||item.url===placeholder)return;
+    const img=new Image();
+    img.onload=()=>{setSrc(item.url);setLoaded(true);};
+    img.src=item.url;
+  },[item.id,item.url]);
+  return(
+    <img
+      src={src}
+      onClick={onClick}
+      style={{...style,filter:loaded?"none":"blur(8px)",transition:"filter 0.25s ease"}}
+      alt=""
+    />
+  );
+}
 
 function HorizontalWall({session,muted,editing,setEditing,username}){
   const [items,setItems]=useState(session?[]:[]);
@@ -69,8 +131,8 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const doodlePoints=useRef([]);
   const doodleColorRef=useRef(doodleColor);
   const doodleWidthRef=useRef(doodleWidth);
-  const doodlingRef=useRef(false);
-  const erasingRef=useRef(false);
+  const doodlingRef=useRef(doodling);
+  const erasingRef=useRef(erasing);
   useEffect(()=>{doodleColorRef.current=doodleColor;},[doodleColor]);
   useEffect(()=>{doodleWidthRef.current=doodleWidth;},[doodleWidth]);
   useEffect(()=>{doodlingRef.current=doodling;},[doodling]);
@@ -404,6 +466,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
         const w=Math.max(100,ratio>=1?maxDim:maxDim*ratio);
         const h=Math.max(100,ratio>=1?maxDim/ratio:maxDim);
         let lodThumbUrl=null;
+        let wallThumbUrl=null;
         try{
           const{blob:thumbBlob}=await makeLodThumb(resultImg,false);
           if(thumbBlob){
@@ -412,7 +475,15 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             if(!thumbErr)lodThumbUrl=supabase.storage.from('photos').getPublicUrl(thumbName).data.publicUrl;
           }
         }catch(e){console.error('Cutout thumbnail failed:',e);}
-        setItems(p=>[{id:Date.now(),type:'cutout',url:publicUrl,lodThumb:lodThumbUrl,cx:item.cx+120,cy:item.cy,rot:0,w,h,zIndex:maxZ+1},...p]);
+        try{
+          const{blob:wallBlob}=await makeWallThumb(resultImg);
+          if(wallBlob){
+            const wallName=`${session.user.id}/wallthumbs/${Date.now()}_cutout.webp`;
+            const{error:wallErr}=await supabase.storage.from('photos').upload(wallName,wallBlob,{contentType:'image/webp'});
+            if(!wallErr)wallThumbUrl=supabase.storage.from('photos').getPublicUrl(wallName).data.publicUrl;
+          }
+        }catch(e){console.error('Cutout wall thumbnail failed:',e);}
+        setItems(p=>[{id:Date.now(),type:'cutout',url:publicUrl,lodThumb:lodThumbUrl,wallThumb:wallThumbUrl,cx:item.cx+120,cy:item.cy,rot:0,w,h,zIndex:maxZ+1},...p]);
         setMaxZ(z=>z+1);setCuttingOut(false);
       };
       resultImg.onerror=()=>{URL.revokeObjectURL(objectUrl);setCuttingOut(false);};
@@ -431,23 +502,37 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     setUploading(true);
     const fileName=`${session.user.id}/${Date.now()}.${fileExt}`;
     const thumbName=`${session.user.id}/thumbs/${Date.now()}.webp`;
+    const wallThumbName=`${session.user.id}/wallthumbs/${Date.now()}.webp`;
     const bordered=photoModeRef.current!=='frameless';
     // Generate tiny blurred LOD thumbnail (white polaroid border baked in if applicable)
-    const thumbBlob=await new Promise(resolve=>{
+    // and the sharp mid-size wall thumbnail, from the same loaded image.
+    const{thumbBlob,wallBlob}=await new Promise(resolve=>{
       const img=new Image();
-      img.onload=()=>{makeLodThumb(img,bordered).then(({blob})=>resolve(blob)).catch(()=>resolve(null));};
-      img.onerror=()=>resolve(null);
+      img.onload=async()=>{
+        const[lod,wall]=await Promise.all([
+          makeLodThumb(img,bordered).catch(()=>({blob:null})),
+          makeWallThumb(img).catch(()=>({blob:null}))
+        ]);
+        resolve({thumbBlob:lod.blob,wallBlob:wall.blob});
+      };
+      img.onerror=()=>resolve({thumbBlob:null,wallBlob:null});
       img.src=URL.createObjectURL(file);
     });
     // Upload full image
     const{error}=await supabase.storage.from('photos').upload(fileName,file);
     if(error){console.error('Upload error:',error);setUploading(false);return;}
     const{data:{publicUrl}}=supabase.storage.from('photos').getPublicUrl(fileName);
-    // Upload LOD thumbnail
+    // Upload LOD thumbnail (far-zoom tier)
     let lodThumbUrl=null;
     if(thumbBlob){
       const{error:thumbErr}=await supabase.storage.from('photos').upload(thumbName,thumbBlob,{contentType:'image/webp'});
       if(!thumbErr){lodThumbUrl=supabase.storage.from('photos').getPublicUrl(thumbName).data.publicUrl;}
+    }
+    // Upload wall thumbnail (normal on-wall tier — loads first, fast)
+    let wallThumbUrl=null;
+    if(wallBlob){
+      const{error:wallErr}=await supabase.storage.from('photos').upload(wallThumbName,wallBlob,{contentType:'image/webp'});
+      if(!wallErr){wallThumbUrl=supabase.storage.from('photos').getPublicUrl(wallThumbName).data.publicUrl;}
     }
     const c=centerWorld();
     const objectUrl=URL.createObjectURL(file);
@@ -468,7 +553,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       const sorted=Object.entries(buckets).sort((a,b)=>b[1]-a[1]);
       const topColors=sorted.slice(0,3).map(([k])=>`rgb(${k})`);
       const dominantColor=topColors[0]||'#d8cdb8';
-      setItems(p=>[{id:Date.now(),type:photoModeRef.current==='frameless'?'cutout':'photo',url:publicUrl,lodThumb:lodThumbUrl,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*12,w,h,zIndex:maxZ+1,dominantColor,topColors},...p]);
+      setItems(p=>[{id:Date.now(),type:photoModeRef.current==='frameless'?'cutout':'photo',url:publicUrl,lodThumb:lodThumbUrl,wallThumb:wallThumbUrl,cx:c.x+(Math.random()-0.5)*140,cy:c.y+(Math.random()-0.5)*140,rot:(Math.random()-0.5)*12,w,h,zIndex:maxZ+1,dominantColor,topColors},...p]);
       setMaxZ(z=>z+1);setUploading(false);
     };
     img.onerror=()=>{URL.revokeObjectURL(objectUrl);setUploading(false);};
@@ -667,7 +752,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             if(item.type==='polaroid'||item.type==='photo'){const isPhoto=item.type==='photo';const pinColor=PIN_COLORS[(item.id||0)%PIN_COLORS.length];return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"pointer",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}else if(item.url){setViewPhoto(item);}}} onMouseEnter={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${(item.rot||0)*0.3}deg) scale(1.06)`;e.currentTarget.style.zIndex=99;}}} onMouseLeave={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(1)`;e.currentTarget.style.zIndex=item.zIndex;}}}>
               <div style={{position:"absolute",top:-14,left:"50%",transform:"translateX(-50%)",width:22,height:22,borderRadius:"50%",background:`radial-gradient(circle at 35% 35%,${pinColor}ee,${pinColor})`,boxShadow:"0 3px 10px rgba(0,0,0,0.45),inset 0 1px 2px rgba(255,255,255,0.4)",zIndex:2}}/>
               <div style={{background:"white",padding:isPhoto?"5px 5px 30px 5px":"8px 8px 36px 8px",boxShadow:isSel?"0 14px 34px rgba(0,0,0,0.30),0 0 0 2px rgba(74,144,226,0.55)":"0 8px 20px rgba(0,0,0,0.25),0 2px 4px rgba(0,0,0,0.10)",width:item.w||148,transition:"box-shadow 0.15s"}}>
-                {isPhoto?<img src={item.url} decoding="async" style={{width:"100%",height:item.h||148,objectFit:"cover",display:"block",background:item.dominantColor||"#e8e0d4"}} alt=""/>:<div style={{width:"100%",height:item.h||148,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.min(item.w||148,item.h||148)*0.4}}>{item.emoji}</div>}
+                {isPhoto?<WallImg item={item} style={{width:"100%",height:item.h||148,objectFit:"cover",display:"block",background:item.dominantColor||"#e8e0d4"}}/>:<div style={{width:"100%",height:item.h||148,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.min(item.w||148,item.h||148)*0.4}}>{item.emoji}</div>}
                 {lod==='full'&&<div onDoubleClick={e=>{if(editing){e.stopPropagation();setEditingCaption(item.id);}}} style={{marginTop:6,fontFamily:"'Permanent Marker',cursive",fontSize:13,color:"#1a1a1a",textAlign:"center",lineHeight:1.3,minHeight:16,cursor:editing?"text":"default"}}>
                   {editingCaption===item.id
                     ?<input autoFocus defaultValue={item.caption||""} onBlur={e=>{setItems(p=>p.map(i=>i.id===item.id?{...i,caption:e.target.value}:i));setEditingCaption(null);}} onKeyDown={e=>{if(e.key==='Enter')e.currentTarget.blur();if(e.key==='Escape')setEditingCaption(null);}} onClick={e=>e.stopPropagation()} style={{background:"transparent",border:"none",borderBottom:"1px solid #ccc",outline:"none",fontFamily:"'Permanent Marker',cursive",fontSize:13,color:"#1a1a1a",textAlign:"center",width:"100%",padding:0}}/>
@@ -687,7 +772,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
               <div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div><div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div>
             </div>);}
             if(item.type==='cutout'){return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,cursor:editing?"grab":"pointer",userSelect:"none"}} onMouseDown={e=>startDrag(e,item.id)} onTouchStart={e=>startDrag(e,item.id)} onClick={e=>{if(editing){e.stopPropagation();setSelected(item.id);}else if(item.url){setViewPhoto(item);}}} onMouseEnter={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${(item.rot||0)*0.3}deg) scale(1.06)`;e.currentTarget.style.zIndex=99;}}} onMouseLeave={e=>{if(!editing){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(1)`;e.currentTarget.style.zIndex=item.zIndex;}}}>
-              <img src={item.url} decoding="async" style={{width:item.w||200,height:item.h||200,objectFit:"cover",display:"block",borderRadius:4}} alt=""/>
+              <WallImg item={item} style={{width:item.w||200,height:item.h||200,objectFit:"cover",display:"block",borderRadius:4}}/>
               {isSel&&lod==='full'&&<><div onMouseDown={e=>startRotate(e,item.id)} onTouchStart={e=>startRotate(e,item.id)} style={hdl("top")}>↻</div><div onMouseDown={e=>startResize(e,item.id)} onTouchStart={e=>startResize(e,item.id)} style={hdl("br")}>⤡</div>{item.url&&<div onClick={e=>{e.stopPropagation();cutOutPhoto(item);}} style={{position:"absolute",top:-10,left:-10,height:20,borderRadius:10,background:cuttingOut?"#888":"#2a9d8f",color:"white",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center",cursor:cuttingOut?"default":"pointer",zIndex:10,padding:"0 8px",fontFamily:"'Nunito',sans-serif",fontWeight:700}}>{cuttingOut?"u{23F3}":"✂️ Cut"}</div>}<div onMouseDown={e=>{e.stopPropagation();setItems(p=>p.filter(i=>i.id!==item.id));setSelected(null);}} style={{position:"absolute",top:-10,right:-10,width:20,height:20,borderRadius:"50%",background:"#e63946",color:"white",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:10}}>✕</div></>}
             </div>);}
             if(item.type==='markertext'){if(lod==='low')return null;const isEditingThis=editingText===item.id;const scale=item.scale||1;return(<div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(${scale})`,cursor:editing&&!isEditingThis?"grab":"default",userSelect:"none"}} onMouseDown={e=>{if(!isEditingThis)startDrag(e,item.id);}} onTouchStart={e=>{if(!isEditingThis)startDrag(e,item.id);}} onClick={e=>{if(editing){e.stopPropagation();bringToFront(item.id);setSelected(item.id);}}} onDoubleClick={e=>{if(editing&&lod==='full'){e.stopPropagation();setEditingText(item.id);}}}>
@@ -737,7 +822,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       </div>
       {viewPhoto&&<div className="photo-modal" onClick={()=>{setViewPhoto(null);setPhotoComments([]);setCommentText("");}} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:1000,display:"flex",alignItems:"stretch"}}>
         <div className="photo-modal-img" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
-          <img src={viewPhoto.url} style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",padding:20}} onClick={e=>e.stopPropagation()} alt=""/>
+          <ViewerImg item={viewPhoto} style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",padding:20}} onClick={e=>e.stopPropagation()}/>
         </div>
         <div className="photo-modal-comments" onClick={e=>e.stopPropagation()} style={{width:300,background:"#fff",display:"flex",flexDirection:"column",cursor:"default"}}>
           <div style={{padding:"16px",borderBottom:"1px solid #eee",fontFamily:"'Nunito',sans-serif",fontSize:14,fontWeight:800}}>Comments</div>
@@ -861,7 +946,7 @@ function SharedWallView({items:initialItems,label}){
                 onMouseLeave={e=>{if(item.type==='photo'){e.currentTarget.style.transform=`translate(-50%,-50%) rotate(${item.rot||0}deg) scale(1)`;e.currentTarget.style.zIndex=item.zIndex;}}}>
                 <div style={{position:"absolute",top:-14,left:"50%",transform:"translateX(-50%)",width:22,height:22,borderRadius:"50%",background:`radial-gradient(circle at 35% 35%,${pinColor}ee,${pinColor})`,boxShadow:"0 3px 10px rgba(0,0,0,0.45),inset 0 1px 2px rgba(255,255,255,0.4)",zIndex:2}}/>
                 <div style={{background:"white",padding:item.type==='photo'?"5px 5px 30px 5px":"8px 8px 36px 8px",boxShadow:"0 8px 20px rgba(0,0,0,0.25)",width:item.w||148}}>
-                  {item.type==='photo'?<img src={item.url} style={{width:"100%",height:item.h||148,objectFit:"cover",display:"block"}} alt=""/>:<div style={{width:"100%",height:item.h||148,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.min(item.w||148,item.h||148)*0.4}}>{item.emoji}</div>}
+                  {item.type==='photo'?<img src={item.wallThumb||item.url} style={{width:"100%",height:item.h||148,objectFit:"cover",display:"block"}} alt=""/>:<div style={{width:"100%",height:item.h||148,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:Math.min(item.w||148,item.h||148)*0.4}}>{item.emoji}</div>}
                   {zoom>=0.55&&<div style={{marginTop:6,fontFamily:"'Permanent Marker',cursive",fontSize:13,color:"#1a1a1a",textAlign:"center",lineHeight:1.2}}>{item.caption||""}</div>}
                 </div>
               </div>
@@ -883,7 +968,7 @@ function SharedWallView({items:initialItems,label}){
             );
             if(item.type==='cutout')return(
               <div key={item.id} style={{position:"absolute",left:item.cx,top:item.cy,zIndex:item.zIndex||1,transform:`translate(-50%,-50%) rotate(${item.rot||0}deg)`,pointerEvents:"none"}}>
-                <img src={item.url} style={{width:item.w||200,height:item.h||200,objectFit:"cover",display:"block",borderRadius:4,filter:"drop-shadow(2px 4px 8px rgba(0,0,0,0.3))"}} alt=""/>
+                <img src={item.wallThumb||item.url} style={{width:item.w||200,height:item.h||200,objectFit:"cover",display:"block",borderRadius:4,filter:"drop-shadow(2px 4px 8px rgba(0,0,0,0.3))"}} alt=""/>
               </div>
             );
             if(item.type==='markertext')return(
@@ -902,7 +987,7 @@ function SharedWallView({items:initialItems,label}){
         </div>
       </div>
       {viewPhoto&&<div onClick={()=>setViewPhoto(null)} style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,0.96)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"zoom-out"}}>
-        <img src={viewPhoto.url} style={{maxWidth:"100vw",maxHeight:"100vh",objectFit:"contain",display:"block"}} alt={viewPhoto.caption||""}/>
+        <ViewerImg item={viewPhoto} style={{maxWidth:"100vw",maxHeight:"100vh",objectFit:"contain",display:"block"}}/>
         <div onClick={()=>setViewPhoto(null)} style={{position:"absolute",top:20,right:28,color:"white",fontSize:32,cursor:"pointer",lineHeight:1,opacity:0.7}}>✕</div>
         {viewPhoto.caption&&<div style={{position:"absolute",bottom:24,left:"50%",transform:"translateX(-50%)",fontFamily:"'Caveat',cursive",fontSize:20,color:"rgba(255,255,255,0.75)"}}>{viewPhoto.caption}</div>}
       </div>}
@@ -1027,8 +1112,9 @@ export default function Pinwall(){
   };
 
   // Scans the signed-in user's wall for photos/cutouts that don't yet have a
-  // pre-baked LOD thumbnail (older items, uploaded before this feature existed)
-  // and generates+uploads one for each, then saves the wall.
+  // pre-baked LOD thumbnail and/or wall thumbnail (older items, uploaded
+  // before these features existed) and generates+uploads whichever are
+  // missing for each, then saves the wall.
   const generateMissingThumbs=async()=>{
     if(!session?.user||generatingThumbs)return;
     setGeneratingThumbs(true);
@@ -1037,7 +1123,7 @@ export default function Pinwall(){
       const{data,error}=await supabase.from('walls').select('items').eq('user_id',session.user.id).single();
       if(error||!data?.items){alert('Could not load your wall.');setGeneratingThumbs(false);setThumbProgress("");return;}
       const items=data.items;
-      const targets=items.filter(it=>(it.type==='photo'||it.type==='polaroid'||it.type==='cutout')&&it.url&&!it.lodThumb);
+      const targets=items.filter(it=>(it.type==='photo'||it.type==='polaroid'||it.type==='cutout')&&it.url&&(!it.lodThumb||!it.wallThumb));
       if(targets.length===0){
         alert('All your photos already have thumbnails!');
         setGeneratingThumbs(false);setThumbProgress("");return;
@@ -1052,13 +1138,26 @@ export default function Pinwall(){
           img.src=it.url;
           await loaded;
           const bordered=it.type==='photo'||it.type==='polaroid';
-          const{blob}=await makeLodThumb(img,bordered);
-          if(blob){
-            const thumbName=`${session.user.id}/thumbs/backfill_${it.id}_${Date.now()}.webp`;
-            const{error:upErr}=await supabase.storage.from('photos').upload(thumbName,blob,{contentType:'image/webp'});
-            if(!upErr){it.lodThumb=supabase.storage.from('photos').getPublicUrl(thumbName).data.publicUrl;done++;}
-            else failed++;
-          } else failed++;
+          let ok=true;
+          if(!it.lodThumb){
+            const{blob}=await makeLodThumb(img,bordered);
+            if(blob){
+              const thumbName=`${session.user.id}/thumbs/backfill_${it.id}_${Date.now()}.webp`;
+              const{error:upErr}=await supabase.storage.from('photos').upload(thumbName,blob,{contentType:'image/webp'});
+              if(!upErr)it.lodThumb=supabase.storage.from('photos').getPublicUrl(thumbName).data.publicUrl;
+              else ok=false;
+            } else ok=false;
+          }
+          if(!it.wallThumb){
+            const{blob:wallBlob}=await makeWallThumb(img);
+            if(wallBlob){
+              const wallName=`${session.user.id}/wallthumbs/backfill_${it.id}_${Date.now()}.webp`;
+              const{error:wallUpErr}=await supabase.storage.from('photos').upload(wallName,wallBlob,{contentType:'image/webp'});
+              if(!wallUpErr)it.wallThumb=supabase.storage.from('photos').getPublicUrl(wallName).data.publicUrl;
+              else ok=false;
+            } else ok=false;
+          }
+          if(ok)done++;else failed++;
         }catch(e){console.error('Thumbnail failed for item',it.id,e);failed++;}
       }
       setThumbProgress("Saving…");
@@ -1172,7 +1271,7 @@ export default function Pinwall(){
             </div>}
           </div>
           <div className="nav-circle" onClick={()=>{window.__pinwall_view_applied=false;supabase.auth.signOut();}} style={{width:34,height:34,borderRadius:"50%",background:"linear-gradient(135deg,#e85d5d,#c0392b)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:12,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,0.25)"}}>{(session.user.email?.[0]||'?').toUpperCase()}</div>
-          {session?.user&&<button className="export-btn" disabled={generatingThumbs} onClick={generateMissingThumbs} title="Scans your wall for photos without a low-zoom thumbnail and generates one" style={{display:"inline-flex",alignItems:"center",padding:"6px 10px",borderRadius:16,border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,cursor:generatingThumbs?"default":"pointer",opacity:generatingThumbs?0.6:1,whiteSpace:"nowrap"}}>{generatingThumbs?(thumbProgress||"Generating…"):"🖼️ Generate Thumbnails"}</button>}
+          {session?.user&&<button className="export-btn" disabled={generatingThumbs} onClick={generateMissingThumbs} title="Scans your wall for photos missing a low-zoom or wall-zoom thumbnail and generates them" style={{display:"inline-flex",alignItems:"center",padding:"6px 10px",borderRadius:16,border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,cursor:generatingThumbs?"default":"pointer",opacity:generatingThumbs?0.6:1,whiteSpace:"nowrap"}}>{generatingThumbs?(thumbProgress||"Generating…"):"🖼️ Generate Thumbnails"}</button>}
           {session.user.email===import.meta.env.VITE_ADMIN_EMAIL&&<button className="export-btn" onClick={async()=>{const{data}=await supabase.from('walls').select('items').eq('user_id',session.user.id).single();if(data?.items){const homeView=JSON.parse(localStorage.getItem('pinwall_home_view')||'null');const exportData={items:data.items,homeView};const blob=new Blob([JSON.stringify(exportData)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='demo-wall.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);alert('Downloaded demo-wall.json ('+data.items.length+' items'+(homeView?' + home view':'')+')');}}} style={{display:"inline-flex",alignItems:"center",padding:"6px 10px",borderRadius:16,border:"none",background:"rgba(30,30,30,0.7)",color:"#fff",fontSize:9,fontFamily:"'Nunito',sans-serif",fontWeight:700,cursor:"pointer"}}>Export demo</button>}
         </div>
       </div>
