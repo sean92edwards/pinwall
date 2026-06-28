@@ -157,6 +157,15 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const mousedownOnItem=useRef(false);
   const viewRef=useRef(view);
   const hasLoaded=useRef(false);
+  const prefetched=useRef(new Set());
+  useEffect(()=>{
+    const urls=items.map(i=>i.lodThumb).filter(u=>u&&!prefetched.current.has(u));
+    if(!urls.length)return;
+    const run=()=>{urls.forEach(u=>{if(prefetched.current.has(u))return;prefetched.current.add(u);const img=new Image();if('fetchPriority' in img)img.fetchPriority='low';img.src=u;});};
+    if(typeof requestIdleCallback!=='undefined'){const id=requestIdleCallback(run,{timeout:4000});return()=>cancelIdleCallback(id);}
+    const id=setTimeout(run,200);return()=>clearTimeout(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[items.length]);
   useEffect(()=>{viewRef.current=view;},[view]);
 
   useEffect(()=>{
