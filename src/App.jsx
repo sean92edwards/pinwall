@@ -2,6 +2,7 @@
 import { supabase } from "./supabase";
 import Auth from "./Auth";
 import { removeBackground } from "@imgly/background-removal";
+import { validateImageFile, validateAudioFile } from "./validateFile";
 
 const STICKERS = ["\u{1F496}","⭐","\u2728","\u{1F31F}","\u{1F4AB}","\u{1F389}","\u{1F942}","\u{1F37E}","\u{1F451}","\u{1F380}","\u{1F48E}","\u{1F98B}","\u{1F338}","\u{1F388}","\u{1F38A}","\u{1F49D}","\u26A1","\u{1F525}","\u{1F495}","\u{1F49C}","\u{1F49B}","\u{1F90D}","\u{1F602}","\u{1F60D}","\u{1F973}","\u{1F62D}","\u{1F929}","\u{1F60E}","\u{1F970}","\u{1F605}","\u{1F64C}","\u{1F44F}","\u{1F48B}","\u{1F382}","\u{1F370}","\u{1F964}","\u{1F3C6}","\u{1F381}","\u{1F3B6}","🎵"];
 
@@ -362,7 +363,8 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const addSpeechBubble=()=>{const c=centerWorld();const id=Date.now();setItems(p=>[{id,type:'speech',text:"",cx:c.x+(Math.random()-0.5)*80,cy:c.y+(Math.random()-0.5)*80,rot:0,color:"#ffffff",tailDir:"bottom",zIndex:maxZ+1},...p]);setMaxZ(z=>z+1);setEditing(true);setSelected(id);setEditingText(id);};
   const addAudio=async(file)=>{
     if(!file||!session?.user||uploadingAudio)return;
-    if(file.size>15*1024*1024){alert('Audio must be under 15MB.');return;}
+    const validation=await validateAudioFile(file);
+    if(!validation.valid){alert(validation.error);return;}
     setUploadingAudio(true);
     const ext=(file.name.split('.').pop()||'mp3').toLowerCase();
     const fileName=`${session.user.id}/audio/${Date.now()}.${ext}`;
@@ -423,14 +425,9 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   };
   const addPhoto=async(file)=>{
     if(!file)return;
-    const ALLOWED_TYPES=['image/jpeg','image/png','image/gif','image/webp','image/avif'];
-    const ALLOWED_EXTS=['jpg','jpeg','png','gif','webp','avif'];
+    const validation=await validateImageFile(file);
+    if(!validation.valid){alert(validation.error);return;}
     const fileExt=(file.name.split('.').pop()||'').toLowerCase();
-    if(!ALLOWED_TYPES.includes(file.type)||!ALLOWED_EXTS.includes(fileExt)){
-      alert('Only image files (JPEG, PNG, GIF, WebP, AVIF) are allowed.');
-      return;
-    }
-    if(file.size>10*1024*1024){alert('File must be under 10MB.');return;}
     setUploading(true);
     const fileName=`${session.user.id}/${Date.now()}.${fileExt}`;
     const thumbName=`${session.user.id}/thumbs/${Date.now()}.webp`;
