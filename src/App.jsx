@@ -158,6 +158,17 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const viewRef=useRef(view);
   const hasLoaded=useRef(false);
   const prefetched=useRef(new Set());
+  const panVelRef=useRef({vx:0,vy:0});
+  const lastPanEventRef=useRef(null);
+  const momentumRafRef=useRef(null);
+  const panThresholdCleared=useRef(false);
+  const pannedViewRef=useRef(null);
+  const pinchStartDist=useRef(null);
+  const pinchThresholdCleared=useRef(false);
+  const pinchVelRef=useRef(0);
+  const lastPinchEventRef=useRef(null);
+  const pinchMidRef=useRef(null);
+  const zoomMomentumRafRef=useRef(null);
   useEffect(()=>{
     const urls=items.map(i=>i.lodThumb).filter(u=>u&&!prefetched.current.has(u));
     if(!urls.length)return;
@@ -296,7 +307,33 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
         setCurrentPath(prev=>prev+` L${wx} ${wy}`);
         return;
       }
-      if(panStart.current){const p=panStart.current;didDrag.current=true;setView(v=>({...v,x:p.vx+(e.clientX-p.mx),y:p.vy+(e.clientY-p.my)}));return;}
+      if(panStart.current){
+        const p=panStart.current;
+        const dx=e.clientX-p.mx,dy=e.clientY-p.my;
+        if(!panThresholdCleared.current){
+          if(Math.hypot(dx,dy)<6)return;
+          panThresholdCleared.current=true;
+          pannedViewRef.current={x:viewRef.current.x,y:viewRef.current.y};
+          lastPanEventRef.current={t:performance.now(),x:e.clientX,y:e.clientY};
+          panVelRef.current={vx:0,vy:0};
+          return;
+        }
+        didDrag.current=true;
+        const now=performance.now();const last=lastPanEventRef.current;
+        if(last){
+          const dt=Math.max(1,now-last.t);
+          const rdx=e.clientX-last.x,rdy=e.clientY-last.y;
+          const spd=Math.hypot(rdx,rdy)/dt;
+          const maxSpd=3;
+          const cdx=spd>maxSpd?(rdx/spd)*maxSpd*dt:rdx;
+          const cdy=spd>maxSpd?(rdy/spd)*maxSpd*dt:rdy;
+          if(pannedViewRef.current){pannedViewRef.current.x+=cdx;pannedViewRef.current.y+=cdy;}
+          panVelRef.current={vx:cdx/dt,vy:cdy/dt};
+        }
+        lastPanEventRef.current={t:now,x:e.clientX,y:e.clientY};
+        if(pannedViewRef.current)setView(v=>({...v,x:pannedViewRef.current.x,y:pannedViewRef.current.y}));
+        return;
+      }
       const d=dragStart.current;if(!d)return;didDrag.current=true;
       if(d.mode==='move'){const dx=(e.clientX-d.mouseX)/d.zoom,dy=(e.clientY-d.mouseY)/d.zoom;setItems(p=>p.map(i=>i.id===d.id?{...i,cx:d.cx+dx,cy:d.cy+dy}:i));}
       else if(d.mode==='rotate'){const angle=Math.atan2(e.clientY-d.cyS,e.clientX-d.cxS)*(180/Math.PI);setItems(p=>p.map(i=>i.id===d.id?{...i,rot:d.startRot+(angle-d.startAngle)}:i));}
@@ -332,7 +369,8 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
         doodlePoints.current=[];
         setCurrentPath(null);
       }
-      dragStart.current=null;panStart.current=null;
+      kickMomentum();
+      dragStart.current=null;panStart.current=null;panThresholdCleared.current=false;
     };
     window.addEventListener('mousemove',onMove);
     window.addEventListener('mouseup',onUp);
@@ -352,7 +390,15 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     if(e.shiftKey){
       setView(v=>({...v,x:v.x-e.deltaX,y:v.y-e.deltaY}));
     } else {
-      setView(v=>{const factor=Math.exp(-e.deltaY*0.0015);const nz=Math.min(3,Math.max(0.05,v.zoom*factor));const wx=(sx-v.x)/v.zoom,wy=(sy-v.y)/v.zoom;return{zoom:nz,x:sx-wx*nz,y:sy-wy*nz};});
+      if(zoomMomentumRafRef.current){cancelAnimationFrame(zoomMomentumRafRef.current);zoomMomentumRafRef.current=null;}
+      setView(v=>{
+        const rawFactor=Math.exp(-e.deltaY*0.0015);
+        const maxFactor=1.5;
+        const factor=Math.max(1/maxFactor,Math.min(maxFactor,rawFactor));
+        const nz=Math.min(3,Math.max(0.05,v.zoom*factor));
+        const wx=(sx-v.x)/v.zoom,wy=(sy-v.y)/v.zoom;
+        return{zoom:nz,x:sx-wx*nz,y:sy-wy*nz};
+      });
     }
   };
   const lastTouchDist=useRef(null);
@@ -362,20 +408,61 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     e.preventDefault();
     if(e.touches.length===1&&panStart.current){
       const t=e.touches[0];
-      didDrag.current=true;
       const p=panStart.current;
-      setView(v=>({...v,x:p.vx+(t.clientX-p.mx),y:p.vy+(t.clientY-p.my)}));
-    } else if(e.touches.length===2&&lastTouchDist.current){
+      const dx=t.clientX-p.mx,dy=t.clientY-p.my;
+      if(!panThresholdCleared.current){
+        if(Math.hypot(dx,dy)<6)return;
+        panThresholdCleared.current=true;
+        pannedViewRef.current={x:viewRef.current.x,y:viewRef.current.y};
+        lastPanEventRef.current={t:performance.now(),x:t.clientX,y:t.clientY};
+        panVelRef.current={vx:0,vy:0};
+        return;
+      }
+      didDrag.current=true;
+      const now=performance.now();const last=lastPanEventRef.current;
+      if(last){
+        const dt=Math.max(1,now-last.t);
+        const rdx=t.clientX-last.x,rdy=t.clientY-last.y;
+        const spd=Math.hypot(rdx,rdy)/dt;
+        const maxSpd=3;
+        const cdx=spd>maxSpd?(rdx/spd)*maxSpd*dt:rdx;
+        const cdy=spd>maxSpd?(rdy/spd)*maxSpd*dt:rdy;
+        if(pannedViewRef.current){pannedViewRef.current.x+=cdx;pannedViewRef.current.y+=cdy;}
+        panVelRef.current={vx:cdx/dt,vy:cdy/dt};
+      }
+      lastPanEventRef.current={t:now,x:t.clientX,y:t.clientY};
+      if(pannedViewRef.current)setView(v=>({...v,x:pannedViewRef.current.x,y:pannedViewRef.current.y}));
+    } else if(e.touches.length===2&&lastTouchDist.current!==null){
       const dx=e.touches[0].clientX-e.touches[1].clientX;
       const dy=e.touches[0].clientY-e.touches[1].clientY;
       const dist=Math.hypot(dx,dy);
-      const factor=dist/lastTouchDist.current;
+      if(!pinchThresholdCleared.current){
+        if(Math.abs(dist-(pinchStartDist.current||dist))<5){lastTouchDist.current=dist;return;}
+        pinchThresholdCleared.current=true;
+        lastTouchDist.current=dist;
+        lastPinchEventRef.current={t:performance.now(),dist};
+        pinchVelRef.current=0;
+        return;
+      }
       const midX=(e.touches[0].clientX+e.touches[1].clientX)/2;
       const midY=(e.touches[0].clientY+e.touches[1].clientY)/2;
       const r=rectOf();
       const sx=midX-(r?.left||0),sy=midY-(r?.top||0);
-      setView(v=>{const nz=Math.min(3,Math.max(0.05,v.zoom*factor));const wx=(sx-v.x)/v.zoom,wy=(sy-v.y)/v.zoom;return{zoom:nz,x:sx-wx*nz,y:sy-wy*nz};});
+      const now=performance.now();const last=lastPinchEventRef.current;
+      const rawFactor=lastTouchDist.current?dist/lastTouchDist.current:1;
+      let clampedFactor=rawFactor;
+      if(last&&rawFactor!==1){
+        const dt=Math.max(1,now-last.t);
+        const rawLogRate=Math.log(rawFactor)/dt;
+        const maxLogRate=0.02;
+        const cappedLogRate=Math.sign(rawLogRate)*Math.min(Math.abs(rawLogRate),maxLogRate);
+        clampedFactor=Math.exp(cappedLogRate*dt);
+        pinchVelRef.current=cappedLogRate;
+        pinchMidRef.current={sx,sy};
+      }
+      lastPinchEventRef.current={t:now,dist};
       lastTouchDist.current=dist;
+      setView(v=>{const nz=Math.min(3,Math.max(0.05,v.zoom*clampedFactor));const wx=(sx-v.x)/v.zoom,wy=(sy-v.y)/v.zoom;return{zoom:nz,x:sx-wx*nz,y:sy-wy*nz};});
     }
   };
   const onTouchStartWall=e=>{
@@ -397,24 +484,40 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     if(e.touches.length===1){
       const t=e.touches[0];
       mousedownOnItem.current=false;
+      cancelAllMomentum();
       const v=viewRef.current;
       panStart.current={mx:t.clientX,my:t.clientY,vx:v.x,vy:v.y};
+      panThresholdCleared.current=false;
+      panVelRef.current={vx:0,vy:0};
+      lastPanEventRef.current={t:performance.now(),x:t.clientX,y:t.clientY};
       didDrag.current=false;
       lastTouchDist.current=null;
     } else if(e.touches.length===2){
       e.preventDefault();
+      cancelAllMomentum();
       const dx=e.touches[0].clientX-e.touches[1].clientX;
       const dy=e.touches[0].clientY-e.touches[1].clientY;
-      lastTouchDist.current=Math.hypot(dx,dy);
+      const initDist=Math.hypot(dx,dy);
+      lastTouchDist.current=initDist;
+      pinchStartDist.current=initDist;
+      pinchThresholdCleared.current=false;
+      pinchVelRef.current=0;
+      lastPinchEventRef.current={t:performance.now(),dist:initDist};
+      pinchMidRef.current=null;
       panStart.current=null;
     }
   };
   const onTouchEndWall=()=>{
+    kickMomentum();
+    kickZoomMomentum();
     panStart.current=null;
+    panThresholdCleared.current=false;
     lastTouchDist.current=null;
+    pinchStartDist.current=null;
+    pinchThresholdCleared.current=false;
   };
-  const zoomBy=mult=>{setView(v=>{const nz=Math.min(3,Math.max(0.05,v.zoom*mult));const cx=vp.w/2,cy=vp.h/2;const wx=(cx-v.x)/v.zoom,wy=(cy-v.y)/v.zoom;return{zoom:nz,x:cx-wx*nz,y:cy-wy*nz};});};
-  const resetView=()=>setView({x:80,y:80,zoom:1});
+  const zoomBy=mult=>{cancelAllMomentum();setView(v=>{const nz=Math.min(3,Math.max(0.05,v.zoom*mult));const cx=vp.w/2,cy=vp.h/2;const wx=(cx-v.x)/v.zoom,wy=(cy-v.y)/v.zoom;return{zoom:nz,x:cx-wx*nz,y:cy-wy*nz};});};
+  const resetView=()=>{cancelAllMomentum();setView({x:80,y:80,zoom:1});};
   useEffect(()=>{
     const el=viewportRef.current;if(!el)return;
     el.addEventListener('wheel',onWheel,{passive:false});
@@ -569,9 +672,58 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     img.src=objectUrl;
   };
 
+  const cancelAllMomentum=()=>{
+    if(momentumRafRef.current){cancelAnimationFrame(momentumRafRef.current);momentumRafRef.current=null;}
+    if(zoomMomentumRafRef.current){cancelAnimationFrame(zoomMomentumRafRef.current);zoomMomentumRafRef.current=null;}
+  };
+
+  const kickZoomMomentum=()=>{
+    const vel=pinchVelRef.current;
+    if(Math.abs(vel)<0.0003)return;
+    const mid=pinchMidRef.current;if(!mid)return;
+    let lv=vel;
+    let lastT=performance.now();
+    const friction=0.9;
+    const step=t=>{
+      const dt=Math.max(1,t-lastT);lastT=t;
+      const factor=Math.exp(lv*dt);
+      lv*=Math.pow(friction,dt/16);
+      setView(v=>{
+        const nz=Math.min(3,Math.max(0.05,v.zoom*factor));
+        const wx=(mid.sx-v.x)/v.zoom,wy=(mid.sy-v.y)/v.zoom;
+        return{zoom:nz,x:mid.sx-wx*nz,y:mid.sy-wy*nz};
+      });
+      if(Math.abs(lv)>0.00005){zoomMomentumRafRef.current=requestAnimationFrame(step);}
+      else{zoomMomentumRafRef.current=null;}
+    };
+    zoomMomentumRafRef.current=requestAnimationFrame(step);
+  };
+
+  const kickMomentum=()=>{
+    if(!panStart.current||!panThresholdCleared.current)return;
+    const{vx,vy}=panVelRef.current;
+    if(Math.hypot(vx,vy)<0.1)return;
+    let mvx=vx,mvy=vy;
+    let curX=pannedViewRef.current?pannedViewRef.current.x:viewRef.current.x;
+    let curY=pannedViewRef.current?pannedViewRef.current.y:viewRef.current.y;
+    let lastT=performance.now();
+    const friction=0.94;
+    const step=t=>{
+      const dt=Math.max(1,t-lastT);lastT=t;
+      curX+=mvx*dt;curY+=mvy*dt;
+      const f=Math.pow(friction,dt/16);
+      mvx*=f;mvy*=f;
+      setView(v=>({...v,x:curX,y:curY}));
+      if(Math.hypot(mvx,mvy)>0.01){momentumRafRef.current=requestAnimationFrame(step);}
+      else{momentumRafRef.current=null;}
+    };
+    momentumRafRef.current=requestAnimationFrame(step);
+  };
+
   const onViewportMouseDown=e=>{
     mousedownOnItem.current=false;
     if(e.button!==0)return;
+    cancelAllMomentum();
     if(doodlingRef.current&&!erasingRef.current){const r=rectOf();const v=viewRef.current;
       const wx=(e.clientX-(r?.left||0)-v.x)/v.zoom;
       const wy=(e.clientY-(r?.top||0)-v.y)/v.zoom;
@@ -581,6 +733,9 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     }
     const v=viewRef.current;
     panStart.current={mx:e.clientX,my:e.clientY,vx:v.x,vy:v.y};
+    panThresholdCleared.current=false;
+    panVelRef.current={vx:0,vy:0};
+    lastPanEventRef.current={t:performance.now(),x:e.clientX,y:e.clientY};
     didDrag.current=false;
   };
 
