@@ -414,26 +414,9 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       if(!panThresholdCleared.current){
         if(Math.hypot(dx,dy)<6)return;
         panThresholdCleared.current=true;
-        pannedViewRef.current={x:viewRef.current.x,y:viewRef.current.y};
-        lastPanEventRef.current={t:performance.now(),x:t.clientX,y:t.clientY};
-        panVelRef.current={vx:0,vy:0};
-        return;
       }
       didDrag.current=true;
-      const now=performance.now();const last=lastPanEventRef.current;
-      if(last){
-        const dt=Math.max(8,now-last.t);
-        const rdx=t.clientX-last.x,rdy=t.clientY-last.y;
-        const spd=Math.hypot(rdx,rdy)/dt;
-        const maxSpd=2;
-        const cdx=spd>maxSpd?(rdx/spd)*maxSpd*dt:rdx;
-        const cdy=spd>maxSpd?(rdy/spd)*maxSpd*dt:rdy;
-        if(pannedViewRef.current){pannedViewRef.current.x+=cdx;pannedViewRef.current.y+=cdy;}
-        const nvx=cdx/dt,nvy=cdy/dt;
-        panVelRef.current={vx:panVelRef.current.vx*0.7+nvx*0.3,vy:panVelRef.current.vy*0.7+nvy*0.3};
-      }
-      lastPanEventRef.current={t:now,x:t.clientX,y:t.clientY};
-      if(pannedViewRef.current)setView(v=>({...v,x:pannedViewRef.current.x,y:pannedViewRef.current.y}));
+      setView(v=>({...v,x:p.vx+dx,y:p.vy+dy}));
     } else if(e.touches.length===2&&lastTouchDist.current!==null){
       const dx=e.touches[0].clientX-e.touches[1].clientX;
       const dy=e.touches[0].clientY-e.touches[1].clientY;
