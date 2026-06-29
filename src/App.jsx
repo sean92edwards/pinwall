@@ -321,14 +321,15 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
         didDrag.current=true;
         const now=performance.now();const last=lastPanEventRef.current;
         if(last){
-          const dt=Math.max(1,now-last.t);
+          const dt=Math.max(8,now-last.t);
           const rdx=e.clientX-last.x,rdy=e.clientY-last.y;
           const spd=Math.hypot(rdx,rdy)/dt;
-          const maxSpd=3;
+          const maxSpd=2;
           const cdx=spd>maxSpd?(rdx/spd)*maxSpd*dt:rdx;
           const cdy=spd>maxSpd?(rdy/spd)*maxSpd*dt:rdy;
           if(pannedViewRef.current){pannedViewRef.current.x+=cdx;pannedViewRef.current.y+=cdy;}
-          panVelRef.current={vx:cdx/dt,vy:cdy/dt};
+          const nvx=cdx/dt,nvy=cdy/dt;
+          panVelRef.current={vx:panVelRef.current.vx*0.7+nvx*0.3,vy:panVelRef.current.vy*0.7+nvy*0.3};
         }
         lastPanEventRef.current={t:now,x:e.clientX,y:e.clientY};
         if(pannedViewRef.current)setView(v=>({...v,x:pannedViewRef.current.x,y:pannedViewRef.current.y}));
@@ -421,14 +422,15 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       didDrag.current=true;
       const now=performance.now();const last=lastPanEventRef.current;
       if(last){
-        const dt=Math.max(1,now-last.t);
+        const dt=Math.max(8,now-last.t);
         const rdx=t.clientX-last.x,rdy=t.clientY-last.y;
         const spd=Math.hypot(rdx,rdy)/dt;
-        const maxSpd=3;
+        const maxSpd=2;
         const cdx=spd>maxSpd?(rdx/spd)*maxSpd*dt:rdx;
         const cdy=spd>maxSpd?(rdy/spd)*maxSpd*dt:rdy;
         if(pannedViewRef.current){pannedViewRef.current.x+=cdx;pannedViewRef.current.y+=cdy;}
-        panVelRef.current={vx:cdx/dt,vy:cdy/dt};
+        const nvx=cdx/dt,nvy=cdy/dt;
+        panVelRef.current={vx:panVelRef.current.vx*0.7+nvx*0.3,vy:panVelRef.current.vy*0.7+nvy*0.3};
       }
       lastPanEventRef.current={t:now,x:t.clientX,y:t.clientY};
       if(pannedViewRef.current)setView(v=>({...v,x:pannedViewRef.current.x,y:pannedViewRef.current.y}));
