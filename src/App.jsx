@@ -675,6 +675,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const cancelAllMomentum=()=>{
     if(momentumRafRef.current){cancelAnimationFrame(momentumRafRef.current);momentumRafRef.current=null;}
     if(zoomMomentumRafRef.current){cancelAnimationFrame(zoomMomentumRafRef.current);zoomMomentumRafRef.current=null;}
+    pannedViewRef.current=null;
   };
 
   const kickZoomMomentum=()=>{
@@ -703,11 +704,15 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     if(!panStart.current||!panThresholdCleared.current)return;
     const{vx,vy}=panVelRef.current;
     if(Math.hypot(vx,vy)<0.1)return;
-    let mvx=vx,mvy=vy;
+    // Cap max momentum velocity
+    const maxV=2.5;
+    const spd=Math.hypot(vx,vy);
+    const scale=spd>maxV?maxV/spd:1;
+    let mvx=vx*scale,mvy=vy*scale;
     let curX=pannedViewRef.current?pannedViewRef.current.x:viewRef.current.x;
     let curY=pannedViewRef.current?pannedViewRef.current.y:viewRef.current.y;
     let lastT=performance.now();
-    const friction=0.94;
+    const friction=0.92;
     const step=t=>{
       const dt=Math.max(1,t-lastT);lastT=t;
       curX+=mvx*dt;curY+=mvy*dt;
