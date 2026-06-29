@@ -705,16 +705,16 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   const kickMomentum=()=>{
     if(!panStart.current||!panThresholdCleared.current)return;
     const{vx,vy}=panVelRef.current;
-    if(Math.hypot(vx,vy)<0.1)return;
-    // Cap max momentum velocity
-    const maxV=1.5;
     const spd=Math.hypot(vx,vy);
+    if(spd<0.15)return;
+    // Hard cap at 0.8px/ms — gentle coast only
+    const maxV=0.8;
     const scale=spd>maxV?maxV/spd:1;
     let mvx=vx*scale,mvy=vy*scale;
     let lastT=performance.now();
-    const friction=0.90;
+    const friction=0.88;
     const step=t=>{
-      const dt=Math.max(1,t-lastT);lastT=t;
+      const dt=Math.min(32,Math.max(1,t-lastT));lastT=t;
       const f=Math.pow(friction,dt/16);
       mvx*=f;mvy*=f;
       setView(v=>({...v,x:v.x+mvx*dt,y:v.y+mvy*dt}));
