@@ -508,8 +508,8 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
     }
   };
   const onTouchEndWall=()=>{
-    kickMomentum();
-    kickZoomMomentum();
+    if(pinchThresholdCleared.current){kickZoomMomentum();}
+    else if(panThresholdCleared.current){kickMomentum();}
     panStart.current=null;
     panThresholdCleared.current=false;
     lastTouchDist.current=null;
