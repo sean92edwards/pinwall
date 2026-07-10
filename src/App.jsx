@@ -327,7 +327,11 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
         }
         lastPanEventRef.current={t:now,x:e.clientX,y:e.clientY};
         // Direct 1:1 pan — no speed capping during drag
-        setView(v=>({...v,x:p.vx+dx,y:p.vy+dy}));
+        const nx=p.vx+dx,ny=p.vy+dy;
+        setView(v=>{
+          if(Math.abs(nx-v.x)<0.5&&Math.abs(ny-v.y)<0.5)return v;
+          return{...v,x:nx,y:ny};
+        });
         return;
       }
       const d=dragStart.current;if(!d)return;didDrag.current=true;
@@ -409,9 +413,26 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       if(!panThresholdCleared.current){
         if(Math.hypot(dx,dy)<6)return;
         panThresholdCleared.current=true;
+        lastPanEventRef.current={t:performance.now(),x:t.clientX,y:t.clientY};
+        panVelRef.current={vx:0,vy:0};
       }
       didDrag.current=true;
-      setView(v=>({...v,x:p.vx+dx,y:p.vy+dy}));
+      // Track velocity for momentum on release (mirrors mouse handler)
+      const now=performance.now();
+      const last=lastPanEventRef.current;
+      if(last){
+        const dt=Math.max(8,now-last.t);
+        const rdx=t.clientX-last.x,rdy=t.clientY-last.y;
+        const nvx=rdx/dt,nvy=rdy/dt;
+        panVelRef.current={vx:panVelRef.current.vx*0.7+nvx*0.3,vy:panVelRef.current.vy*0.7+nvy*0.3};
+      }
+      lastPanEventRef.current={t:now,x:t.clientX,y:t.clientY};
+      const nx=p.vx+dx,ny=p.vy+dy;
+      setView(v=>{
+        // Skip sub-pixel updates to avoid unnecessary React renders
+        if(Math.abs(nx-v.x)<0.5&&Math.abs(ny-v.y)<0.5)return v;
+        return{...v,x:nx,y:ny};
+      });
     } else if(e.touches.length===2&&lastTouchDist.current!==null){
       const dx=e.touches[0].clientX-e.touches[1].clientX;
       const dy=e.touches[0].clientY-e.touches[1].clientY;
@@ -489,6 +510,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
   };
   const onTouchEndWall=()=>{
     if(pinchThresholdCleared.current){kickZoomMomentum();}
+    else{kickMomentum();}
     panStart.current=null;
     panThresholdCleared.current=false;
     lastTouchDist.current=null;
@@ -856,7 +878,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
       </div>}
       <div ref={viewportRef} onMouseDown={onViewportMouseDown} onClick={onViewportClick} style={{flex:1,position:"relative",overflow:"hidden",cursor:doodling?"crosshair":(editing?"default":"grab"),touchAction:"none",background:"#c6a06a",backgroundImage:`radial-gradient(ellipse 120% 90% at 50% -5%,rgba(255,244,222,0.35) 0%,transparent 55%),radial-gradient(ellipse at 88% 108%,rgba(110,78,42,0.32) 0%,transparent 50%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='cork'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0.25'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23cork)' opacity='0.4'/%3E%3C/svg%3E")`,backgroundSize:"100% 100%,100% 100%,150px 150px",userSelect:"none"}}>
       <div style={{position:"absolute",inset:0,boxShadow:"inset 0 0 90px rgba(0,0,0,0.22)",pointerEvents:"none",zIndex:5}}/>
-        <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,pointerEvents:(doodling&&!erasing)?"none":"auto"}}>
+        <div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate3d(${view.x}px,${view.y}px,0) scale(${view.zoom})`,willChange:"transform",pointerEvents:(doodling&&!erasing)?"none":"auto"}}>
           {sorted.map(item=>{
             const isSel=editing&&selected===item.id;
 
@@ -930,12 +952,12 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             return null;
           })}
         </div>
-        {lod==='full'&&<svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:erasing?"auto":"none",zIndex:6,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
+        {lod==='full'&&<svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:erasing?"auto":"none",zIndex:6,overflow:"visible",transform:`translate3d(${view.x}px,${view.y}px,0) scale(${view.zoom})`,transformOrigin:"0 0",willChange:"transform"}}>
           {items.filter(i=>i.type==='doodle').filter(it=>{const h=Math.max(it.w||100,it.h||100)/2;return it.cx+h>=wL&&it.cx-h<=wR&&it.cy+h>=wT&&it.cy-h<=wB;}).map(item=>(
             <path key={item.id} d={item.path} fill="none" stroke={item.color||"#1a1a1a"} strokeWidth={(item.strokeWidth||3)*1.5} strokeLinecap="round" strokeLinejoin="round" opacity="0.9" transform={`translate(${item.cx-item.w/2},${item.cy-item.h/2})`} onClick={erasing?()=>setItems(p=>p.filter(i=>i.id!==item.id)):undefined} style={{cursor:erasing?"crosshair":"default",pointerEvents:erasing?"auto":"none"}}/>
           ))}
         </svg>}
-        {editing&&<div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,zIndex:9,pointerEvents:"auto"}}>
+        {editing&&<div style={{position:"absolute",left:0,top:0,transformOrigin:"0 0",transform:`translate3d(${view.x}px,${view.y}px,0) scale(${view.zoom})`,willChange:"transform",zIndex:9,pointerEvents:"auto"}}>
           {items.filter(i=>i.type==='audio').map(item=>{
             const isSel=editing&&selected===item.id;
             const range=item.range||600;
@@ -955,7 +977,7 @@ function HorizontalWall({session,muted,editing,setEditing,username}){
             </div>);
           })}
         </div>}
-        {currentPath&&<svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:8,overflow:"visible",transform:`translate(${view.x}px,${view.y}px) scale(${view.zoom})`,transformOrigin:"0 0"}}>
+        {currentPath&&<svg style={{position:"absolute",left:0,top:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:8,overflow:"visible",transform:`translate3d(${view.x}px,${view.y}px,0) scale(${view.zoom})`,transformOrigin:"0 0",willChange:"transform"}}>
           <path d={currentPath} fill="none" stroke={doodleColor} strokeWidth={doodleWidth*1.5/view.zoom} strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
         </svg>}
         <div className="zoom-controls" style={{position:"absolute",right:16,bottom:16,zIndex:60,display:isMobile?"none":"flex",alignItems:"center",gap:6,opacity:showZoom?1:0,transition:"opacity 1.5s ease",pointerEvents:showZoom?"auto":"none"}}>

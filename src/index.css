@@ -21,6 +21,9 @@ body {
   height: 100vh;
   overflow: hidden;
   overscroll-behavior: none;
+  /* Prevent the browser's native pan/scroll from competing with JS panning */
+  touch-action: none;
+  -webkit-overflow-scrolling: auto;
   background: #c6a06a;
 }
 
@@ -34,6 +37,12 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  touch-action: none;
+}
+
+/* Kill tap highlight flash on iOS — makes panning feel smoother */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Larger touch targets on mobile */
